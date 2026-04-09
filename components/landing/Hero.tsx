@@ -6,6 +6,7 @@ import { useState, useCallback } from "react";
 import { HeroTerminal } from "./HeroTerminal";
 import { FlyingGopher } from "./FlyingGopher";
 import { useMousePosition } from "@/hooks/useMousePosition";
+import { MagneticButton } from "@/components/ui/MagneticButton";
 
 // Floating keywords
 const FLOATING_KEYWORDS = [
@@ -27,10 +28,14 @@ export function Hero() {
     setGopherVisible(true);
   }, []);
 
+  const handleGopherClose = useCallback(() => {
+    setGopherVisible(false);
+  }, []);
+
   return (
     <>
       {/* Flying Gopher - fixed position, follows scroll + mouse */}
-      <FlyingGopher isVisible={gopherVisible} mousePosition={mousePosition} />
+      <FlyingGopher isVisible={gopherVisible} mousePosition={mousePosition} onClose={handleGopherClose} />
       
       <section className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden bg-background">
         {/* Subtle background texture */}
@@ -115,19 +120,23 @@ export function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <a
+                <MagneticButton
+                  as="a"
                   href="#lead-form"
                   className="group flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                  strength={0.35}
                 >
                   Оставить заявку
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
-                <a
+                </MagneticButton>
+                <MagneticButton
+                  as="a"
                   href="#curriculum"
                   className="px-8 py-4 text-foreground border border-border rounded-lg font-medium hover:bg-card hover:border-primary/30 transition-all"
+                  strength={0.2}
                 >
                   Смотреть программу
-                </a>
+                </MagneticButton>
               </motion.div>
 
               {/* Trust Indicators */}
@@ -184,7 +193,7 @@ export function Hero() {
               </motion.div>
               
               {/* Gopher launch indicator */}
-              {goButtonClicked && (
+              {goButtonClicked && gopherVisible && (
                 <motion.div
                   className="absolute right-0 -bottom-16 bg-[#00ADD8] text-[#0D0D0D] rounded-lg px-4 py-2 text-sm font-semibold shadow-lg"
                   initial={{ opacity: 0, y: -10, scale: 0.8 }}
@@ -197,6 +206,22 @@ export function Hero() {
                   </div>
                   <div className="text-xs opacity-70 mt-0.5">Скролль вниз</div>
                 </motion.div>
+              )}
+              
+              {/* Show gopher again button */}
+              {goButtonClicked && !gopherVisible && (
+                <motion.button
+                  onClick={() => setGopherVisible(true)}
+                  className="absolute right-0 -bottom-16 bg-[#00ADD8] text-[#0D0D0D] rounded-lg px-4 py-2 text-sm font-semibold shadow-lg hover:bg-[#00ADD8]/90 active:scale-95 transition-all"
+                  initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🐹</span>
+                    Вернуть Gopher
+                  </div>
+                </motion.button>
               )}
             </motion.div>
           </div>

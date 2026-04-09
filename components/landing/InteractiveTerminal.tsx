@@ -49,11 +49,50 @@ export function InteractiveTerminal() {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [glowIntensity, setGlowIntensity] = useState(0);
   const [showSuccessRipple, setShowSuccessRipple] = useState(false);
+  const [goVersionText, setGoVersionText] = useState("");
+  const [hasTypedVersion, setHasTypedVersion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
+  const terminalWrapperRef = useRef<HTMLDivElement>(null);
   const particleIdRef = useRef(0);
   const animationFrameRef = useRef<number>();
   const progressControls = useAnimation();
+
+  // Check for mobile on mount
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+  }, []);
+
+  // Type out "Go 1.21" when terminal comes into view
+  useEffect(() => {
+    if (hasTypedVersion) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !hasTypedVersion) {
+          setHasTypedVersion(true);
+          const text = "Go 1.21";
+          let i = 0;
+          const interval = setInterval(() => {
+            if (i <= text.length) {
+              setGoVersionText(text.slice(0, i));
+              i++;
+            } else {
+              clearInterval(interval);
+            }
+          }, 80);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (terminalWrapperRef.current) {
+      observer.observe(terminalWrapperRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasTypedVersion]);
 
   // Create particle
   const createParticle = useCallback((type: Particle["type"], x?: number, y?: number): Particle => {
@@ -89,6 +128,9 @@ export function InteractiveTerminal() {
       return;
     }
 
+    // Skip particle animation on mobile for performance
+    if (isMobile) return;
+
     const animate = () => {
       setParticles(prev => {
         const updated = prev
@@ -101,8 +143,8 @@ export function InteractiveTerminal() {
           }))
           .filter(p => p.life > 0);
 
-        // Add new particles periodically
-        if (Math.random() > 0.6) {
+        // Add new particles periodically (reduced frequency)
+        if (Math.random() > 0.7) {
           const type: Particle["type"] = Math.random() > 0.7 ? "spark" : Math.random() > 0.5 ? "glow" : "code";
           updated.push(createParticle(type));
         }
@@ -119,7 +161,7 @@ export function InteractiveTerminal() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isRunning, createParticle]);
+  }, [isRunning, createParticle, isMobile]);
 
   // Run command simulation
   const handleRun = useCallback(() => {
@@ -137,23 +179,27 @@ export function InteractiveTerminal() {
       transition: { duration: 3.5, ease: "easeInOut" }
     });
 
-    // Add burst of particles on start
-    setParticles(prev => [
-      ...prev,
-      ...Array.from({ length: 20 }, () => createParticle("spark", 200, 20))
-    ]);
+    // Add burst of particles on start (skip on mobile)
+    if (!isMobile) {
+      setParticles(prev => [
+        ...prev,
+        ...Array.from({ length: 20 }, () => createParticle("spark", 200, 20))
+      ]);
+    }
 
     // Progressively add terminal lines
     TERMINAL_LINES.forEach((line, index) => {
       setTimeout(() => {
         setLines(prev => [...prev, line]);
         
-        // Add particles on important events
+        // Add particles on important events (skip on mobile)
         if (line.type === "success") {
-          setParticles(prev => [
-            ...prev,
-            ...Array.from({ length: 30 }, () => createParticle("spark"))
-          ]);
+          if (!isMobile) {
+            setParticles(prev => [
+              ...prev,
+              ...Array.from({ length: 30 }, () => createParticle("spark"))
+            ]);
+          }
           setGlowIntensity(0.6);
         }
         
@@ -195,7 +241,7 @@ export function InteractiveTerminal() {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
+    <div ref={terminalWrapperRef} className="relative w-full max-w-2xl mx-auto">
       {/* Ambient glow effect */}
       <motion.div
         className="absolute -inset-4 rounded-2xl opacity-0"
@@ -408,7 +454,17 @@ export function InteractiveTerminal() {
               {isComplete ? "Running" : isRunning ? "Building..." : "Ready"}
             </span>
           </div>
-          <span>Go 1.21 | UTF-8 | LF</span>
+          <span className="flex items-center gap-1">
+            <span className="text-[#C9673A] font-mono">{goVersionText}</span>
+            {!hasTypedVersion && (
+              <motion.span 
+                className="inline-block w-1.5 h-3 bg-[#C9673A]"
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+              />
+            )}
+            <span> | UTF-8 | LF</span>
+          </span>
         </div>
       </motion.div>
 

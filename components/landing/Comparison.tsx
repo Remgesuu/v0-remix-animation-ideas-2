@@ -2,7 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { Check, X, Minus, Calculator, TrendingUp, Clock, DollarSign } from "lucide-react";
+import { Check, X, Minus, Calculator, TrendingUp, Clock, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
 
 const comparisonData = {
   criteria: [
@@ -65,7 +65,7 @@ const comparisonData = {
   ],
 };
 
-function ValueCell({ value }: { value: { value: boolean | string; note?: string; isText?: boolean } }) {
+function ValueCell({ value, showNote = false }: { value: { value: boolean | string; note?: string; isText?: boolean }, showNote?: boolean }) {
   if (value.isText) {
     return (
       <span className="text-sm font-medium text-foreground">{value.value}</span>
@@ -75,10 +75,10 @@ function ValueCell({ value }: { value: { value: boolean | string; note?: string;
   if (value.value === true) {
     return (
       <div className="flex items-center justify-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-[#00D4AA]/20 flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full bg-[#00D4AA]/20 flex items-center justify-center shrink-0">
           <Check className="w-4 h-4 text-[#00D4AA]" />
         </div>
-        {value.note && <span className="text-xs text-muted-foreground hidden sm:inline">{value.note}</span>}
+        {value.note && <span className={`text-xs text-muted-foreground ${showNote ? 'inline' : 'hidden sm:inline'}`}>{value.note}</span>}
       </div>
     );
   }
@@ -86,20 +86,116 @@ function ValueCell({ value }: { value: { value: boolean | string; note?: string;
   if (value.value === "partial") {
     return (
       <div className="flex items-center justify-center gap-2">
-        <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center shrink-0">
           <Minus className="w-4 h-4 text-yellow-500" />
         </div>
-        {value.note && <span className="text-xs text-muted-foreground hidden sm:inline">{value.note}</span>}
+        {value.note && <span className={`text-xs text-muted-foreground ${showNote ? 'inline' : 'hidden sm:inline'}`}>{value.note}</span>}
       </div>
     );
   }
 
   return (
     <div className="flex items-center justify-center gap-2">
-      <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
+      <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
         <X className="w-4 h-4 text-red-500" />
       </div>
-      {value.note && <span className="text-xs text-muted-foreground hidden sm:inline">{value.note}</span>}
+      {value.note && <span className={`text-xs text-muted-foreground ${showNote ? 'inline' : 'hidden sm:inline'}`}>{value.note}</span>}
+    </div>
+  );
+}
+
+// Mobile comparison cards with swipe
+function MobileComparisonCards() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handlePrev = () => {
+    setActiveIndex((prev) => (prev > 0 ? prev - 1 : comparisonData.options.length - 1));
+  };
+
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev < comparisonData.options.length - 1 ? prev + 1 : 0));
+  };
+
+  const option = comparisonData.options[activeIndex];
+
+  return (
+    <div className="md:hidden">
+      {/* Navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={handlePrev}
+          className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center active:bg-muted transition-colors"
+          aria-label="Previous option"
+        >
+          <ChevronLeft className="w-5 h-5 text-foreground" />
+        </button>
+        
+        <div className="flex items-center gap-2">
+          {comparisonData.options.map((opt, idx) => (
+            <button
+              key={opt.name}
+              onClick={() => setActiveIndex(idx)}
+              className={`h-2 rounded-full transition-all ${
+                idx === activeIndex 
+                  ? 'w-8 bg-primary' 
+                  : 'w-2 bg-muted-foreground/30'
+              }`}
+              aria-label={`Go to ${opt.name}`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={handleNext}
+          className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center active:bg-muted transition-colors"
+          aria-label="Next option"
+        >
+          <ChevronRight className="w-5 h-5 text-foreground" />
+        </button>
+      </div>
+
+      {/* Card */}
+      <motion.div
+        key={activeIndex}
+        ref={containerRef}
+        className={`bg-card rounded-2xl border overflow-hidden ${
+          option.highlight ? 'border-primary' : 'border-border'
+        }`}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.2 }}
+      >
+        {/* Card Header */}
+        <div className={`p-4 text-center ${option.highlight ? 'bg-primary/10' : 'bg-muted/50'}`}>
+          <h3 className={`text-lg font-semibold ${option.highlight ? 'text-primary' : 'text-foreground'}`}>
+            {option.name}
+          </h3>
+          {option.highlight && (
+            <span className="inline-block mt-1 text-xs text-primary/70">Рекомендуем</span>
+          )}
+        </div>
+
+        {/* Card Body */}
+        <div className="divide-y divide-border">
+          {comparisonData.criteria.map((criterion) => (
+            <div key={criterion.key} className="flex items-center justify-between p-4">
+              <span className="text-sm text-foreground flex-1">{criterion.name}</span>
+              <div className="ml-4">
+                <ValueCell 
+                  value={option.values[criterion.key as keyof typeof option.values]} 
+                  showNote={true}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      <p className="text-xs text-muted-foreground mt-4 text-center">
+        Свайпайте или используйте стрелки для сравнения
+      </p>
     </div>
   );
 }
@@ -233,7 +329,11 @@ export function Comparison() {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-8 items-start">
+        {/* Mobile Cards View */}
+        <MobileComparisonCards />
+
+        {/* Desktop Grid Layout */}
+        <div className="hidden md:grid lg:grid-cols-3 gap-8 items-start">
           {/* Comparison Table */}
           <div className="lg:col-span-2">
             <motion.div
@@ -298,6 +398,11 @@ export function Comparison() {
           <div className="lg:col-span-1">
             <ROICalculator />
           </div>
+        </div>
+
+        {/* Mobile ROI Calculator */}
+        <div className="md:hidden mt-8">
+          <ROICalculator />
         </div>
       </div>
     </section>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, ReactNode } from "react";
+import { useRef, useState, useCallback, ReactNode, useEffect } from "react";
 import { motion } from "framer-motion";
 
 interface TiltCardProps {
@@ -20,9 +20,20 @@ export function TiltCard({
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
   const [glarePosition, setGlarePosition] = useState({ x: 50, y: 50 });
   const [isHovering, setIsHovering] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check for mobile on mount - disable tilt for performance
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!ref.current) return;
+    if (!ref.current || isMobile) return;
 
     const rect = ref.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
@@ -37,7 +48,7 @@ export function TiltCard({
       x: x * 100,
       y: y * 100,
     });
-  }, [maxTilt]);
+  }, [maxTilt, isMobile]);
 
   const handleMouseEnter = useCallback(() => {
     setIsHovering(true);

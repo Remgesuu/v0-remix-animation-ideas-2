@@ -242,10 +242,14 @@ export function HeroTerminal({ onGoClick, showGoButton }: HeroTerminalProps) {
             <div className="text-[#666] text-xs mb-1">Ready to launch Gopher</div>
             <div className="flex items-center gap-2">
               <span className="text-[#C9673A]">$</span>
-              <span 
-                className={`inline-block w-2 h-4 bg-[#00ADD8] align-middle transition-opacity ${
-                  cursorVisible ? "opacity-100" : "opacity-0"
-                }`}
+              <motion.span 
+                className="inline-block w-2 h-4 bg-[#00ADD8] align-middle"
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ 
+                  duration: 1,
+                  repeat: Infinity,
+                  ease: "steps(2)"
+                }}
               />
             </div>
           </motion.div>

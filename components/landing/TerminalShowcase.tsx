@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { Code2, Cpu, Database, Globe, Rocket } from "lucide-react";
 import { InteractiveTerminal } from "./InteractiveTerminal";
+import { MagneticButton } from "@/components/ui/MagneticButton";
 
 // Floating code snippets that orbit around the terminal
 const CODE_SNIPPETS = [
@@ -19,17 +20,26 @@ const MATRIX_CHARS = "ゴーラングプログラミングコード関数型変�
 
 function MatrixRain() {
   const [columns, setColumns] = useState<{ chars: string[]; x: number; speed: number }[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
   
   useEffect(() => {
-    const cols = Array.from({ length: 15 }, (_, i) => ({
-      chars: Array.from({ length: 10 }, () => 
+    // Check for mobile and reduce columns for performance
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    
+    const columnCount = mobile ? 6 : 15;
+    const cols = Array.from({ length: columnCount }, (_, i) => ({
+      chars: Array.from({ length: mobile ? 5 : 10 }, () => 
         MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)]
       ),
-      x: (i / 15) * 100,
+      x: (i / columnCount) * 100,
       speed: 10 + Math.random() * 20,
     }));
     setColumns(cols);
   }, []);
+
+  // Skip rendering on mobile for performance
+  if (isMobile) return null;
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
@@ -256,17 +266,17 @@ export function TerminalShowcase() {
           <p className="text-[#666] mb-4">
             Хотите научиться создавать такие сервисы?
           </p>
-          <motion.a
+          <MagneticButton
+            as="a"
             href="https://t.me/zaharich777"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#C9673A] hover:bg-[#E8845B] text-white rounded-lg font-medium transition-colors"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            strength={0.3}
           >
             <Rocket className="w-5 h-5" />
             Начать обучение
-          </motion.a>
+          </MagneticButton>
         </motion.div>
       </div>
     </section>
