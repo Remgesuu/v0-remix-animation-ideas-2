@@ -20,20 +20,20 @@ interface GopherModelProps {
 function GopherModel({ scrollProgress, isVisible, mousePosition }: GopherModelProps) {
   const { scene } = useGLTF("/models/go_gopher.glb");
   const groupRef = useRef<THREE.Group>(null);
-  const { viewport } = useThree();
+  const { viewport, camera } = useThree();
 
   const clonedScene = scene.clone();
 
-  // Start position in bottom-right corner, smaller scale
+  // Start position in bottom-right corner
   const targetPosition = useRef({ x: 2, y: -1.5, z: 0 });
   const currentPosition = useRef({ x: 3, y: -1.5, z: 0 });
-  const targetRotation = useRef({ x: 0, y: -Math.PI / 4, z: 0 });
-  const currentRotation = useRef({ x: 0, y: -Math.PI / 4, z: 0 });
+  const targetLookAt = useRef(new THREE.Vector3(0, 0, 5));
+  const currentLookAt = useRef(new THREE.Vector3(0, 0, 5));
 
   useEffect(() => {
     const normalizedScroll = scrollProgress;
 
-    // Mouse influence (-1 to 1) - reduced for subtlety
+    // Mouse influence (-1 to 1)
     const mouseInfluenceX = (mousePosition.normalizedX - 0.5) * 2;
     const mouseInfluenceY = (mousePosition.normalizedY - 0.5) * 2;
 
@@ -41,61 +41,72 @@ function GopherModel({ scrollProgress, isVisible, mousePosition }: GopherModelPr
     const xOscillation = Math.sin(normalizedScroll * Math.PI * 2) * 0.8;
     const yOscillation = Math.sin(normalizedScroll * Math.PI * 3) * 0.6;
     
-    // Keep Gopher in bottom-right quadrant, with subtle movement
+    // Keep Gopher in bottom-right quadrant
     const maxX = viewport.width * 0.35;
     const minX = viewport.width * 0.15;
     const baseX = minX + (maxX - minX) * (0.5 + xOscillation * 0.3);
-    
-    // Y position: stays in lower half mostly, with gentle float
     const baseY = -viewport.height * 0.2 + yOscillation * 0.4;
     
-    // Clamp to viewport bounds with margin
+    // Clamp to viewport bounds
     const boundedX = Math.max(1.5, Math.min(baseX + mouseInfluenceX * 0.3, viewport.width * 0.4));
     const boundedY = Math.max(-viewport.height * 0.35, Math.min(baseY + mouseInfluenceY * 0.2, viewport.height * 0.25));
 
     targetPosition.current = {
       x: boundedX,
       y: boundedY,
-      z: -1.5 + Math.abs(mouseInfluenceX) * 0.2,
+      z: -1.5,
     };
 
-    // Gopher "looks at" cursor - subtle head tilt
-    const rotationY = -Math.PI / 5 + mouseInfluenceX * 0.15;
-    const rotationX = -mouseInfluenceY * 0.1;
-    const rotationZ = mouseInfluenceX * 0.05;
-
-    targetRotation.current = {
-      x: rotationX,
-      y: rotationY,
-      z: rotationZ,
-    };
+    // Calculate 3D point where Gopher should look (cursor position in 3D space)
+    // Convert normalized mouse to viewport coordinates
+    const cursorX = (mousePosition.normalizedX - 0.5) * viewport.width;
+    const cursorY = -(mousePosition.normalizedY - 0.5) * viewport.height;
+    
+    // The "look at" point is in front of Gopher, towards the cursor
+    targetLookAt.current.set(cursorX, cursorY, 5);
   }, [scrollProgress, viewport.width, viewport.height, mousePosition]);
 
   useFrame((_, delta) => {
     if (!groupRef.current || !isVisible) return;
 
-    // Smooth interpolation with slightly faster response
-    const lerpFactor = 1 - Math.pow(0.0005, delta);
+    // Position interpolation (slower, smooth movement)
+    const positionLerp = 1 - Math.pow(0.001, delta);
+    currentPosition.current.x += (targetPosition.current.x - currentPosition.current.x) * positionLerp;
+    currentPosition.current.y += (targetPosition.current.y - currentPosition.current.y) * positionLerp;
+    currentPosition.current.z += (targetPosition.current.z - currentPosition.current.z) * positionLerp;
 
-    currentPosition.current.x += (targetPosition.current.x - currentPosition.current.x) * lerpFactor;
-    currentPosition.current.y += (targetPosition.current.y - currentPosition.current.y) * lerpFactor;
-    currentPosition.current.z += (targetPosition.current.z - currentPosition.current.z) * lerpFactor;
+    // LookAt interpolation (faster, responsive gaze)
+    const lookAtLerp = 1 - Math.pow(0.0001, delta);
+    currentLookAt.current.x += (targetLookAt.current.x - currentLookAt.current.x) * lookAtLerp;
+    currentLookAt.current.y += (targetLookAt.current.y - currentLookAt.current.y) * lookAtLerp;
+    currentLookAt.current.z += (targetLookAt.current.z - currentLookAt.current.z) * lookAtLerp;
 
-    currentRotation.current.x += (targetRotation.current.x - currentRotation.current.x) * lerpFactor;
-    currentRotation.current.y += (targetRotation.current.y - currentRotation.current.y) * lerpFactor;
-    currentRotation.current.z += (targetRotation.current.z - currentRotation.current.z) * lerpFactor;
-
+    // Set position
     groupRef.current.position.set(
       currentPosition.current.x,
       currentPosition.current.y,
       currentPosition.current.z
     );
 
-    groupRef.current.rotation.set(
-      currentRotation.current.x,
-      currentRotation.current.y,
-      currentRotation.current.z
-    );
+    // Make Gopher look at cursor position
+    // Create a temporary object to calculate lookAt rotation
+    const gopherPos = groupRef.current.position.clone();
+    const lookDirection = currentLookAt.current.clone().sub(gopherPos).normalize();
+    
+    // Calculate rotation to face the cursor
+    // Gopher's default forward is -Z, so we need to adjust
+    const targetQuaternion = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0);
+    const matrix = new THREE.Matrix4();
+    matrix.lookAt(gopherPos, currentLookAt.current, up);
+    targetQuaternion.setFromRotationMatrix(matrix);
+    
+    // Add a base rotation so Gopher faces more towards camera
+    const baseRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
+    targetQuaternion.multiply(baseRotation);
+    
+    // Smoothly interpolate rotation
+    groupRef.current.quaternion.slerp(targetQuaternion, lookAtLerp * 0.5);
   });
 
   if (!isVisible) return null;
