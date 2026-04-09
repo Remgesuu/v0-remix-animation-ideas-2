@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useAnimation, Variants } from "framer-motion";
-import { useEffect, useReducedMotion, useState } from "react";
+import { motion, useAnimation, Variants, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 interface AnimatedGopherProps {
   isTriggered?: boolean;
