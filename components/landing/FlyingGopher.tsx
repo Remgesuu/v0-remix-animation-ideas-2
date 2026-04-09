@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, Suspense, useCallback } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useGLTF, Environment, Float } from "@react-three/drei";
+import { useGLTF, Environment } from "@react-three/drei";
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
 
@@ -29,146 +29,123 @@ function GopherModel({ scrollProgress, isVisible, mousePosition, isDragging, dra
   // Position refs
   const targetPosition = useRef({ x: 2, y: -1, z: 0 });
   const currentPosition = useRef({ x: 3, y: -1, z: 0 });
-  
-  // Rotation refs for look-at
-  const targetRotation = useRef(new THREE.Quaternion());
-  const currentRotation = useRef(new THREE.Quaternion());
+  const targetLookAt = useRef(new THREE.Vector3(0, 0, 5));
+  const currentLookAt = useRef(new THREE.Vector3(0, 0, 5));
 
   useEffect(() => {
-    if (!isVisible) return;
-
-    // If dragging, use drag offset position
     if (isDragging) {
-      // Convert normalized drag offset to viewport coordinates
-      const dragX = (dragOffset.x - 0.5) * viewport.width * 1.2;
-      const dragY = -(dragOffset.y - 0.5) * viewport.height * 1.2;
+      // When dragging, Gopher follows cursor with offset
+      const cursorX = (mousePosition.normalizedX - 0.5) * viewport.width;
+      const cursorY = -(mousePosition.normalizedY - 0.5) * viewport.height;
       
       targetPosition.current = {
-        x: dragX + viewport.width * 0.3,
-        y: dragY,
-        z: 0,
+        x: cursorX + dragOffset.x,
+        y: cursorY + dragOffset.y,
+        z: 0.5, // Bring forward when dragging
       };
     } else {
-      // Smart positioning based on scroll - stays on edges, alternates sides
-      const normalizedScroll = scrollProgress;
+      // Smart positioning: alternate sides based on scroll sections
+      const section = Math.floor(scrollProgress * 6); // 6 sections
+      const isRightSide = section % 2 === 0;
       
-      // Alternate between left and right edges based on scroll
-      const scrollSection = Math.floor(normalizedScroll * 6); // 6 sections
-      const isRightSide = scrollSection % 2 === 0;
+      // Oscillation for organic movement
+      const yOscillation = Math.sin(scrollProgress * Math.PI * 4) * 0.5;
+      const xOffset = Math.sin(scrollProgress * Math.PI * 2) * 0.3;
       
-      // Vertical position follows scroll with gentle wave
-      const yWave = Math.sin(normalizedScroll * Math.PI * 4) * 0.3;
-      const baseY = (normalizedScroll - 0.5) * -viewport.height * 0.6 + yWave;
+      // Position on edge of screen
+      const baseX = isRightSide 
+        ? viewport.width * 0.38 + xOffset
+        : -viewport.width * 0.38 - xOffset;
       
-      // X position: far right or far left edge
-      const edgeMargin = viewport.width * 0.38;
-      const baseX = isRightSide ? edgeMargin : -edgeMargin + viewport.width * 0.1;
-      
-      // Small hover towards cursor
-      const mouseInfluenceX = (mousePosition.normalizedX - 0.5) * 0.4;
-      const mouseInfluenceY = (mousePosition.normalizedY - 0.5) * 0.3;
+      // Y position varies with scroll
+      const baseY = yOscillation;
       
       targetPosition.current = {
-        x: baseX + mouseInfluenceX,
-        y: baseY - mouseInfluenceY,
+        x: baseX,
+        y: baseY,
         z: -1,
       };
     }
 
-    // Calculate look-at rotation towards cursor - VERY responsive
-    const cursorX = (mousePosition.normalizedX - 0.5) * viewport.width * 2;
-    const cursorY = -(mousePosition.normalizedY - 0.5) * viewport.height * 2;
-    
-    // Direction from gopher to cursor
-    const gopherPos = new THREE.Vector3(
-      currentPosition.current.x,
-      currentPosition.current.y,
-      currentPosition.current.z
-    );
-    const cursorPos = new THREE.Vector3(cursorX, cursorY, 5);
-    
-    // Create lookAt matrix
-    const lookMatrix = new THREE.Matrix4();
-    lookMatrix.lookAt(gopherPos, cursorPos, new THREE.Vector3(0, 1, 0));
-    
-    // Extract quaternion and add base rotation (Gopher faces -Z by default)
-    const lookQuat = new THREE.Quaternion().setFromRotationMatrix(lookMatrix);
-    const baseRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
-    lookQuat.multiply(baseRot);
-    
-    targetRotation.current.copy(lookQuat);
-  }, [scrollProgress, viewport.width, viewport.height, mousePosition, isDragging, dragOffset, isVisible]);
+    // Gopher always looks at cursor
+    const cursorX = (mousePosition.normalizedX - 0.5) * viewport.width;
+    const cursorY = -(mousePosition.normalizedY - 0.5) * viewport.height;
+    targetLookAt.current.set(cursorX, cursorY, 5);
+  }, [scrollProgress, viewport.width, viewport.height, mousePosition, isDragging, dragOffset]);
 
   useFrame((_, delta) => {
     if (!groupRef.current || !isVisible) return;
 
     // Position interpolation - faster when dragging
-    const positionSpeed = isDragging ? 0.00001 : 0.0005;
+    const positionSpeed = isDragging ? 0.00001 : 0.001;
     const positionLerp = 1 - Math.pow(positionSpeed, delta);
     
     currentPosition.current.x += (targetPosition.current.x - currentPosition.current.x) * positionLerp;
     currentPosition.current.y += (targetPosition.current.y - currentPosition.current.y) * positionLerp;
     currentPosition.current.z += (targetPosition.current.z - currentPosition.current.z) * positionLerp;
 
-    // Rotation interpolation - VERY fast and responsive
-    const rotationLerp = 1 - Math.pow(0.00001, delta);
-    currentRotation.current.slerp(targetRotation.current, rotationLerp);
+    // LookAt interpolation - very responsive
+    const lookAtLerp = 1 - Math.pow(0.00001, delta);
+    currentLookAt.current.x += (targetLookAt.current.x - currentLookAt.current.x) * lookAtLerp;
+    currentLookAt.current.y += (targetLookAt.current.y - currentLookAt.current.y) * lookAtLerp;
+    currentLookAt.current.z += (targetLookAt.current.z - currentLookAt.current.z) * lookAtLerp;
 
-    // Apply position
+    // Set position
     groupRef.current.position.set(
       currentPosition.current.x,
       currentPosition.current.y,
       currentPosition.current.z
     );
 
-    // Apply rotation
-    groupRef.current.quaternion.copy(currentRotation.current);
+    // Make Gopher look at cursor
+    const gopherPos = groupRef.current.position.clone();
+    
+    const targetQuaternion = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0);
+    const matrix = new THREE.Matrix4();
+    matrix.lookAt(gopherPos, currentLookAt.current, up);
+    targetQuaternion.setFromRotationMatrix(matrix);
+    
+    // Base rotation so Gopher faces camera
+    const baseRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
+    targetQuaternion.multiply(baseRotation);
+    
+    // Fast slerp for responsive gaze
+    groupRef.current.quaternion.slerp(targetQuaternion, 0.15);
+    
+    // Add subtle bobbing animation
+    if (!isDragging) {
+      const time = Date.now() * 0.001;
+      groupRef.current.position.y += Math.sin(time * 2) * 0.02;
+      groupRef.current.rotation.z = Math.sin(time * 1.5) * 0.03;
+    }
   });
 
   if (!isVisible) return null;
 
   return (
-    <Float
-      speed={isDragging ? 0 : 1.5}
-      rotationIntensity={isDragging ? 0 : 0.1}
-      floatIntensity={isDragging ? 0 : 0.2}
-      floatingRange={[-0.03, 0.03]}
-    >
-      <group ref={groupRef} scale={0.35}>
-        <primitive object={clonedScene} />
-      </group>
-    </Float>
+    <group ref={groupRef} scale={0.35}>
+      <primitive object={clonedScene} />
+    </group>
   );
 }
 
-interface SceneProps {
-  scrollProgress: number;
-  isVisible: boolean;
-  mousePosition: MousePosition;
-  isDragging: boolean;
-  dragOffset: { x: number; y: number };
-}
+function CameraController({ mousePosition }: { mousePosition: MousePosition }) {
+  const { camera } = useThree();
+  const targetRotation = useRef({ x: 0, y: 0 });
 
-function Scene({ scrollProgress, isVisible, mousePosition, isDragging, dragOffset }: SceneProps) {
-  return (
-    <>
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[10, 10, 5]} intensity={1.2} />
-      <directionalLight position={[-5, 5, -5]} intensity={0.4} color="#C9673A" />
-      <pointLight position={[0, 5, 0]} intensity={0.5} color="#00D4AA" />
+  useFrame(() => {
+    const mouseInfluenceX = (mousePosition.normalizedX - 0.5) * 2;
+    const mouseInfluenceY = (mousePosition.normalizedY - 0.5) * 2;
 
-      <Suspense fallback={null}>
-        <GopherModel 
-          scrollProgress={scrollProgress} 
-          isVisible={isVisible} 
-          mousePosition={mousePosition}
-          isDragging={isDragging}
-          dragOffset={dragOffset}
-        />
-        <Environment preset="city" />
-      </Suspense>
-    </>
-  );
+    targetRotation.current.x = -mouseInfluenceY * 0.02;
+    targetRotation.current.y = mouseInfluenceX * 0.02;
+
+    camera.rotation.x += (targetRotation.current.x - camera.rotation.x) * 0.05;
+    camera.rotation.y += (targetRotation.current.y - camera.rotation.y) * 0.05;
+  });
+
+  return null;
 }
 
 interface FlyingGopherProps {
@@ -181,8 +158,8 @@ export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
   const [mounted, setMounted] = useState(false);
   const [internalMouse, setInternalMouse] = useState({ normalizedX: 0.5, normalizedY: 0.5 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0.7, y: 0.5 });
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -190,30 +167,17 @@ export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
 
   // Mouse tracking
   useEffect(() => {
-    if (mousePosition) return;
-
     const handleMouseMove = (e: MouseEvent) => {
       const newMouse = {
         normalizedX: e.clientX / window.innerWidth,
         normalizedY: e.clientY / window.innerHeight,
       };
       setInternalMouse(newMouse);
-      
-      // Update drag position if dragging
-      if (isDragging) {
-        setDragOffset(newMouse);
-      }
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mousePosition, isDragging]);
-
-  // External mouse position updates drag
-  useEffect(() => {
-    if (!mousePosition || !isDragging) return;
-    setDragOffset(mousePosition);
-  }, [mousePosition, isDragging]);
+  }, []);
 
   // Scroll tracking
   useEffect(() => {
@@ -232,25 +196,26 @@ export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
 
   // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Check if clicking on Gopher area (right side of screen or wherever it currently is)
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    // Start dragging
     setIsDragging(true);
-    setDragOffset({
-      x: e.clientX / window.innerWidth,
-      y: e.clientY / window.innerHeight,
-    });
+    setDragOffset({ x: 0, y: 0 });
+    e.preventDefault();
   }, []);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
   }, []);
 
-  // Global mouse up listener
   useEffect(() => {
-    if (!isDragging) return;
-    
-    const handleGlobalMouseUp = () => setIsDragging(false);
-    window.addEventListener("mouseup", handleGlobalMouseUp);
-    return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
-  }, [isDragging]);
+    if (isDragging) {
+      window.addEventListener("mouseup", handleMouseUp);
+      return () => window.removeEventListener("mouseup", handleMouseUp);
+    }
+  }, [isDragging, handleMouseUp]);
 
   if (!mounted) return null;
 
@@ -260,7 +225,7 @@ export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          ref={canvasRef}
+          ref={containerRef}
           className={`fixed inset-0 z-40 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
           style={{ pointerEvents: 'auto' }}
           initial={{ opacity: 0 }}
@@ -268,20 +233,29 @@ export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
           onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
         >
           <Canvas
             camera={{ position: [0, 0, 8], fov: 45 }}
             gl={{ antialias: true, alpha: true }}
             style={{ background: "transparent", pointerEvents: 'none' }}
           >
-            <Scene 
-              scrollProgress={scrollProgress} 
-              isVisible={isVisible}
-              mousePosition={effectiveMouse}
-              isDragging={isDragging}
-              dragOffset={dragOffset}
-            />
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[10, 10, 5]} intensity={1} />
+            <directionalLight position={[-5, 5, -5]} intensity={0.3} color="#C9673A" />
+            <pointLight position={[0, 5, 0]} intensity={0.4} color="#00D4AA" />
+            
+            <CameraController mousePosition={effectiveMouse} />
+
+            <Suspense fallback={null}>
+              <GopherModel 
+                scrollProgress={scrollProgress} 
+                isVisible={isVisible}
+                mousePosition={effectiveMouse}
+                isDragging={isDragging}
+                dragOffset={dragOffset}
+              />
+              <Environment preset="city" />
+            </Suspense>
           </Canvas>
         </motion.div>
       )}
