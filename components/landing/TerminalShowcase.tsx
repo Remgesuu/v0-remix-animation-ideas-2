@@ -1,105 +1,158 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef, useState, useCallback } from "react";
-import { Play, RotateCcw, CheckCircle2, Loader2 } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { Code2, Cpu, Database, Globe, Rocket } from "lucide-react";
+import { InteractiveTerminal } from "./InteractiveTerminal";
 
-interface TerminalShowcaseProps {
-  onRunTriggered?: () => void;
-}
-
-// Terminal output lines
-const COMPILE_SEQUENCE = [
-  { text: "$ go build -o server ./cmd/api", type: "command", delay: 0 },
-  { text: "go: downloading dependencies...", type: "info", delay: 400 },
-  { text: "go: found module github.com/gin-gonic/gin", type: "info", delay: 800 },
-  { text: "go: found module github.com/lib/pq", type: "info", delay: 1000 },
-  { text: "", type: "empty", delay: 1200 },
-  { text: "$ ./server", type: "command", delay: 1400 },
-  { text: "[GIN-debug] Listening on :8080", type: "success", delay: 1800 },
-  { text: "[API] Connected to PostgreSQL", type: "success", delay: 2100 },
-  { text: "[API] Redis cache initialized", type: "success", delay: 2300 },
-  { text: "[API] Server started successfully", type: "success", delay: 2500 },
-  { text: "", type: "empty", delay: 2700 },
-  { text: "Ready to accept connections!", type: "final", delay: 2900 },
+// Floating code snippets that orbit around the terminal
+const CODE_SNIPPETS = [
+  { code: "func main()", icon: Code2, delay: 0 },
+  { code: "go routine", icon: Cpu, delay: 0.5 },
+  { code: "PostgreSQL", icon: Database, delay: 1 },
+  { code: "HTTP Server", icon: Globe, delay: 1.5 },
+  { code: "Deploy", icon: Rocket, delay: 2 },
 ];
 
-// Code to display
-const CODE_CONTENT = `package main
+// Matrix rain characters
+const MATRIX_CHARS = "ゴーラングプログラミングコード関数型変数";
 
-import (
-    "github.com/gin-gonic/gin"
-    "log"
-)
+function MatrixRain() {
+  const [columns, setColumns] = useState<{ chars: string[]; x: number; speed: number }[]>([]);
+  
+  useEffect(() => {
+    const cols = Array.from({ length: 15 }, (_, i) => ({
+      chars: Array.from({ length: 10 }, () => 
+        MATRIX_CHARS[Math.floor(Math.random() * MATRIX_CHARS.length)]
+      ),
+      x: (i / 15) * 100,
+      speed: 10 + Math.random() * 20,
+    }));
+    setColumns(cols);
+  }, []);
 
-func main() {
-    r := gin.Default()
-    
-    r.GET("/api/health", func(c *gin.Context) {
-        c.JSON(200, gin.H{"status": "ok"})
-    })
-    
-    log.Fatal(r.Run(":8080"))
-}`;
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
+      {columns.map((col, i) => (
+        <motion.div
+          key={i}
+          className="absolute text-[#C9673A] font-mono text-xs leading-tight"
+          style={{ left: `${col.x}%` }}
+          initial={{ y: "-100%" }}
+          animate={{ y: "100vh" }}
+          transition={{
+            duration: col.speed,
+            repeat: Infinity,
+            ease: "linear",
+            delay: i * 0.3,
+          }}
+        >
+          {col.chars.map((char, j) => (
+            <div key={j} style={{ opacity: 1 - j * 0.1 }}>{char}</div>
+          ))}
+        </motion.div>
+      ))}
+    </div>
+  );
+}
 
-type RunState = "idle" | "running" | "complete";
+function FloatingSnippet({ 
+  code, 
+  icon: Icon, 
+  delay, 
+  index 
+}: { 
+  code: string; 
+  icon: typeof Code2; 
+  delay: number; 
+  index: number;
+}) {
+  const angle = (index / CODE_SNIPPETS.length) * Math.PI * 2;
+  const radius = 320;
+  const x = Math.cos(angle) * radius;
+  const y = Math.sin(angle) * radius * 0.4;
 
-export function TerminalShowcase({ onRunTriggered }: TerminalShowcaseProps) {
+  return (
+    <motion.div
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      initial={{ opacity: 0, scale: 0 }}
+      animate={{ 
+        opacity: [0.4, 0.8, 0.4],
+        scale: 1,
+        x: [x, x + 20, x],
+        y: [y, y - 10, y],
+      }}
+      transition={{
+        opacity: { duration: 3, repeat: Infinity, delay },
+        scale: { duration: 0.5, delay },
+        x: { duration: 4, repeat: Infinity, ease: "easeInOut", delay },
+        y: { duration: 3, repeat: Infinity, ease: "easeInOut", delay },
+      }}
+    >
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-[#252525]/80 backdrop-blur-sm rounded-full border border-[#333] text-sm">
+        <Icon className="w-3.5 h-3.5 text-[#C9673A]" />
+        <span className="text-[#888] font-mono">{code}</span>
+      </div>
+    </motion.div>
+  );
+}
+
+// Animated connection lines
+function ConnectionLines({ isActive }: { isActive: boolean }) {
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 500">
+      <defs>
+        <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#C9673A" stopOpacity="0" />
+          <stop offset="50%" stopColor="#C9673A" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#C9673A" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      
+      {/* Animated paths */}
+      {[0, 1, 2, 3, 4].map((i) => {
+        const startX = 100 + i * 150;
+        const midY = 150 + Math.sin(i) * 50;
+        return (
+          <motion.path
+            key={i}
+            d={`M ${startX} 50 Q ${startX + 50} ${midY} 400 250`}
+            fill="none"
+            stroke="url(#lineGradient)"
+            strokeWidth="1"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={isActive ? {
+              pathLength: [0, 1, 0],
+              opacity: [0, 0.5, 0],
+            } : {}}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              delay: i * 0.3,
+              ease: "easeInOut",
+            }}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+export function TerminalShowcase() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [runState, setRunState] = useState<RunState>("idle");
-  const [visibleLines, setVisibleLines] = useState<number>(0);
-  const [progress, setProgress] = useState(0);
-
-  const handleRun = useCallback(() => {
-    if (runState === "running") return;
-    
-    setRunState("running");
-    setVisibleLines(0);
-    setProgress(0);
-    
-    // Notify parent (Hero) about the trigger
-    onRunTriggered?.();
-
-    // Animate through compile sequence
-    COMPILE_SEQUENCE.forEach((line, index) => {
-      setTimeout(() => {
-        setVisibleLines(index + 1);
-        setProgress(((index + 1) / COMPILE_SEQUENCE.length) * 100);
-        
-        if (index === COMPILE_SEQUENCE.length - 1) {
-          setTimeout(() => setRunState("complete"), 300);
-        }
-      }, line.delay);
-    });
-  }, [runState, onRunTriggered]);
-
-  const handleReset = () => {
-    setRunState("idle");
-    setVisibleLines(0);
-    setProgress(0);
-  };
-
-  const getLineColor = (type: string) => {
-    switch (type) {
-      case "command": return "text-[#C9673A]";
-      case "info": return "text-[#888]";
-      case "success": return "text-[#00D4AA]";
-      case "final": return "text-[#00D4AA] font-semibold";
-      default: return "text-[#666]";
-    }
-  };
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <section 
       ref={ref}
-      id="terminal-demo"
       className="relative py-24 md:py-32 overflow-hidden bg-[#18181B]"
     >
       {/* Background effects */}
       <div className="absolute inset-0">
+        {/* Gradient orbs */}
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#C9673A]/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#7DD3CA]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#C9673A]/5 rounded-full blur-3xl" />
         
         {/* Grid pattern */}
         <div 
@@ -109,6 +162,9 @@ export function TerminalShowcase({ onRunTriggered }: TerminalShowcaseProps) {
             backgroundSize: "40px 40px",
           }}
         />
+        
+        {/* Matrix rain */}
+        <MatrixRain />
       </div>
 
       <div className="container mx-auto px-4 relative">
@@ -129,7 +185,7 @@ export function TerminalShowcase({ onRunTriggered }: TerminalShowcaseProps) {
           </motion.span>
 
           <h2 className="text-3xl md:text-5xl font-serif text-[#F5F2ED] mb-4 text-balance">
-            Вот как{" "}
+            Посмотрите, как{" "}
             <span className="text-[#C9673A]">оживает</span>{" "}
             ваш код
           </h2>
@@ -140,141 +196,29 @@ export function TerminalShowcase({ onRunTriggered }: TerminalShowcaseProps) {
           </p>
         </motion.div>
 
-        {/* Terminal + Code Layout */}
+        {/* Terminal showcase area */}
         <motion.div
-          className="max-w-5xl mx-auto"
+          className="relative max-w-4xl mx-auto"
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8, delay: 0.3 }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Code Editor */}
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#333] overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333]">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                    <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                    <div className="w-3 h-3 rounded-full bg-[#28c840]" />
-                  </div>
-                  <span className="ml-2 text-xs text-[#666] font-mono">main.go</span>
-                </div>
-                <span className="text-xs text-[#555] font-mono">Go 1.21</span>
-              </div>
-
-              {/* Code content */}
-              <div className="p-4 font-mono text-sm overflow-x-auto">
-                <pre className="text-[#AAA]">
-                  <code>{CODE_CONTENT}</code>
-                </pre>
-              </div>
-            </div>
-
-            {/* Terminal */}
-            <div className="bg-[#0d0d0d] rounded-xl border border-[#333] overflow-hidden flex flex-col">
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#333]">
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                    <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                    <div className="w-3 h-3 rounded-full bg-[#28c840]" />
-                  </div>
-                  <span className="ml-2 text-xs text-[#666] font-mono">Terminal</span>
-                </div>
-                
-                {/* Run button */}
-                <div className="flex items-center gap-2">
-                  {runState === "complete" && (
-                    <motion.button
-                      onClick={handleReset}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#888] hover:text-[#F5F2ED] transition-colors"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Reset
-                    </motion.button>
-                  )}
-                  
-                  <motion.button
-                    onClick={handleRun}
-                    disabled={runState === "running"}
-                    className={`
-                      flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-medium transition-all
-                      ${runState === "running" 
-                        ? "bg-[#333] text-[#666] cursor-not-allowed" 
-                        : runState === "complete"
-                        ? "bg-[#00D4AA]/20 text-[#00D4AA] border border-[#00D4AA]/30"
-                        : "bg-[#C9673A] text-white hover:bg-[#E8845B]"
-                      }
-                    `}
-                    whileHover={runState === "idle" ? { scale: 1.05 } : {}}
-                    whileTap={runState === "idle" ? { scale: 0.95 } : {}}
-                  >
-                    {runState === "running" ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Running...
-                      </>
-                    ) : runState === "complete" ? (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Complete
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-3.5 h-3.5" />
-                        Run
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-              </div>
-
-              {/* Progress bar */}
-              {runState !== "idle" && (
-                <div className="h-0.5 bg-[#333]">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-[#C9673A] to-[#00D4AA]"
-                    initial={{ width: "0%" }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.1 }}
-                  />
-                </div>
-              )}
-
-              {/* Terminal output */}
-              <div className="flex-1 p-4 font-mono text-sm min-h-[280px] overflow-y-auto">
-                {runState === "idle" ? (
-                  <div className="text-[#555] flex items-center gap-2">
-                    <span className="text-[#C9673A]">$</span>
-                    <span>Press Run to start compilation...</span>
-                    <motion.span
-                      className="w-2 h-4 bg-[#C9673A]"
-                      animate={{ opacity: [1, 0] }}
-                      transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
-                    />
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {COMPILE_SEQUENCE.slice(0, visibleLines).map((line, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.15 }}
-                        className={getLineColor(line.type)}
-                      >
-                        {line.text || "\u00A0"}
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+          {/* Floating code snippets */}
+          <div className="hidden lg:block absolute inset-0 -inset-x-32">
+            {CODE_SNIPPETS.map((snippet, index) => (
+              <FloatingSnippet key={snippet.code} {...snippet} index={index} />
+            ))}
           </div>
+
+          {/* Connection lines */}
+          <div className="hidden lg:block absolute inset-0 -inset-x-32">
+            <ConnectionLines isActive={isHovered} />
+          </div>
+
+          {/* Main terminal */}
+          <InteractiveTerminal />
 
           {/* Bottom stats */}
           <motion.div
@@ -286,7 +230,7 @@ export function TerminalShowcase({ onRunTriggered }: TerminalShowcaseProps) {
             {[
               { value: "< 1s", label: "Время компиляции" },
               { value: "0", label: "Ошибок" },
-              { value: "100%", label: "Production Ready" },
+              { value: "100%", label: "Готовность к продакшену" },
             ].map((stat, i) => (
               <motion.div
                 key={stat.label}
@@ -313,11 +257,14 @@ export function TerminalShowcase({ onRunTriggered }: TerminalShowcaseProps) {
             Хотите научиться создавать такие сервисы?
           </p>
           <motion.a
-            href="#lead-form"
+            href="https://t.me/zaharich777"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#C9673A] hover:bg-[#E8845B] text-white rounded-lg font-medium transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
+            <Rocket className="w-5 h-5" />
             Начать обучение
           </motion.a>
         </motion.div>
