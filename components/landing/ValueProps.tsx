@@ -2,6 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { TiltCard } from "@/components/ui/TiltCard";
 
 const values = [
   {
@@ -67,22 +68,27 @@ export function ValueProps() {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: index * 0.15 }}
             >
-              <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-start">
-                {/* Number */}
-                <span className="text-6xl md:text-8xl font-serif font-bold text-primary/10 group-hover:text-primary/20 transition-colors leading-none">
-                  {value.number}
-                </span>
-                
-                {/* Content */}
-                <div className="flex-1 pt-2 md:pt-6">
-                  <h3 className="text-2xl md:text-3xl font-serif font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">
-                    {value.title}
-                  </h3>
-                  <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
-                    {value.description}
-                  </p>
+              <TiltCard 
+                className="p-6 md:p-8 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm"
+                maxTilt={6}
+              >
+                <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-start">
+                  {/* Number */}
+                  <span className="text-6xl md:text-8xl font-serif font-bold text-primary/10 group-hover:text-primary/20 transition-colors leading-none">
+                    {value.number}
+                  </span>
+                  
+                  {/* Content */}
+                  <div className="flex-1 pt-2 md:pt-6">
+                    <h3 className="text-2xl md:text-3xl font-serif font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">
+                      {value.title}
+                    </h3>
+                    <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
+                      {value.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </TiltCard>
             </motion.div>
           ))}
         </div>

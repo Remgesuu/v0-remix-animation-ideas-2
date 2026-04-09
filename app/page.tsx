@@ -1,7 +1,7 @@
 import { Navigation } from "@/components/landing/Navigation";
 import { Hero } from "@/components/landing/Hero";
 import { ValueProps } from "@/components/landing/ValueProps";
-import { TerminalShowcase } from "@/components/landing/TerminalShowcase";
+
 import { Portfolio } from "@/components/landing/Portfolio";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { Curriculum } from "@/components/landing/Curriculum";
@@ -20,7 +20,6 @@ export default function Home() {
       <Navigation />
       <Hero />
       <ValueProps />
-      <TerminalShowcase />
       <Portfolio />
       <Testimonials />
       <Curriculum />

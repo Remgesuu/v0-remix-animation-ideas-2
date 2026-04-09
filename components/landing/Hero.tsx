@@ -5,6 +5,7 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 import { useState, useCallback } from "react";
 import { HeroTerminal } from "./HeroTerminal";
 import { FlyingGopher } from "./FlyingGopher";
+import { useMousePosition } from "@/hooks/useMousePosition";
 
 // Floating keywords
 const FLOATING_KEYWORDS = [
@@ -19,6 +20,7 @@ const FLOATING_KEYWORDS = [
 export function Hero() {
   const [gopherVisible, setGopherVisible] = useState(false);
   const [goButtonClicked, setGoButtonClicked] = useState(false);
+  const mousePosition = useMousePosition();
   
   const handleGoClick = useCallback(() => {
     setGoButtonClicked(true);
@@ -27,8 +29,8 @@ export function Hero() {
 
   return (
     <>
-      {/* Flying Gopher - fixed position, follows scroll */}
-      <FlyingGopher isVisible={gopherVisible} />
+      {/* Flying Gopher - fixed position, follows scroll + mouse */}
+      <FlyingGopher isVisible={gopherVisible} mousePosition={mousePosition} />
       
       <section className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden bg-background">
         {/* Subtle background texture */}

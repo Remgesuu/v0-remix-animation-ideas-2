@@ -142,6 +142,14 @@
   }
 }
 
+/* Hide system cursor on desktop for custom cursor */
+@media (hover: hover) and (pointer: fine) {
+  html,
+  html * {
+    cursor: none !important;
+  }
+}
+
 /* Grain texture utility */
 .grain::before {
   content: '';
