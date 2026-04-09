@@ -186,9 +186,9 @@ export function Hero() {
               {/* Gopher launch indicator */}
               {goButtonClicked && (
                 <motion.div
-                  className="absolute -right-2 top-1/2 -translate-y-1/2 translate-x-full bg-[#00ADD8] text-[#0D0D0D] rounded-lg px-4 py-2 text-sm font-semibold shadow-lg hidden lg:block"
-                  initial={{ opacity: 0, x: -20, scale: 0.8 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  className="absolute right-0 -bottom-16 bg-[#00ADD8] text-[#0D0D0D] rounded-lg px-4 py-2 text-sm font-semibold shadow-lg"
+                  initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
                   <div className="flex items-center gap-2">

@@ -24,43 +24,52 @@ function GopherModel({ scrollProgress, isVisible, mousePosition }: GopherModelPr
 
   const clonedScene = scene.clone();
 
-  const targetPosition = useRef({ x: 3, y: 0, z: 0 });
-  const currentPosition = useRef({ x: 5, y: 0, z: 0 });
+  // Start position in bottom-right corner, smaller scale
+  const targetPosition = useRef({ x: 2, y: -1.5, z: 0 });
+  const currentPosition = useRef({ x: 3, y: -1.5, z: 0 });
   const targetRotation = useRef({ x: 0, y: -Math.PI / 4, z: 0 });
   const currentRotation = useRef({ x: 0, y: -Math.PI / 4, z: 0 });
 
   useEffect(() => {
     const normalizedScroll = scrollProgress;
 
-    // Mouse influence (-1 to 1)
+    // Mouse influence (-1 to 1) - reduced for subtlety
     const mouseInfluenceX = (mousePosition.normalizedX - 0.5) * 2;
     const mouseInfluenceY = (mousePosition.normalizedY - 0.5) * 2;
 
-    // Reduced scroll oscillation for more subtle movement
-    const xOscillation = Math.sin(normalizedScroll * Math.PI * 3) * 1.8;
-    const yPosition = Math.sin(normalizedScroll * Math.PI * 2) * 1.2 + Math.cos(normalizedScroll * Math.PI * 5) * 0.2;
-    const zPosition = Math.cos(normalizedScroll * Math.PI * 2) * 0.8;
+    // Gentler scroll oscillation - Gopher stays near edges
+    const xOscillation = Math.sin(normalizedScroll * Math.PI * 2) * 0.8;
+    const yOscillation = Math.sin(normalizedScroll * Math.PI * 3) * 0.6;
+    
+    // Keep Gopher in bottom-right quadrant, with subtle movement
+    const maxX = viewport.width * 0.35;
+    const minX = viewport.width * 0.15;
+    const baseX = minX + (maxX - minX) * (0.5 + xOscillation * 0.3);
+    
+    // Y position: stays in lower half mostly, with gentle float
+    const baseY = -viewport.height * 0.2 + yOscillation * 0.4;
+    
+    // Clamp to viewport bounds with margin
+    const boundedX = Math.max(1.5, Math.min(baseX + mouseInfluenceX * 0.3, viewport.width * 0.4));
+    const boundedY = Math.max(-viewport.height * 0.35, Math.min(baseY + mouseInfluenceY * 0.2, viewport.height * 0.25));
 
-    const baseX = viewport.width * 0.3;
-
-    // Combined position: scroll + mouse influence
     targetPosition.current = {
-      x: baseX + xOscillation + mouseInfluenceX * 0.6,
-      y: yPosition + mouseInfluenceY * 0.4,
-      z: zPosition - 2 + Math.abs(mouseInfluenceX) * 0.3,
+      x: boundedX,
+      y: boundedY,
+      z: -1.5 + Math.abs(mouseInfluenceX) * 0.2,
     };
 
-    // Gopher "looks at" cursor - tilts head toward mouse
-    const rotationY = -Math.PI / 4 + xOscillation * 0.1 + mouseInfluenceX * 0.25;
-    const rotationX = yPosition * 0.08 - mouseInfluenceY * 0.15;
-    const rotationZ = -xOscillation * 0.06 + mouseInfluenceX * 0.08;
+    // Gopher "looks at" cursor - subtle head tilt
+    const rotationY = -Math.PI / 5 + mouseInfluenceX * 0.15;
+    const rotationX = -mouseInfluenceY * 0.1;
+    const rotationZ = mouseInfluenceX * 0.05;
 
     targetRotation.current = {
       x: rotationX,
       y: rotationY,
       z: rotationZ,
     };
-  }, [scrollProgress, viewport.width, mousePosition]);
+  }, [scrollProgress, viewport.width, viewport.height, mousePosition]);
 
   useFrame((_, delta) => {
     if (!groupRef.current || !isVisible) return;
@@ -93,12 +102,12 @@ function GopherModel({ scrollProgress, isVisible, mousePosition }: GopherModelPr
 
   return (
     <Float
-      speed={2.5}
-      rotationIntensity={0.2}
-      floatIntensity={0.4}
-      floatingRange={[-0.08, 0.08]}
+      speed={2}
+      rotationIntensity={0.15}
+      floatIntensity={0.3}
+      floatingRange={[-0.05, 0.05]}
     >
-      <group ref={groupRef} scale={0.75}>
+      <group ref={groupRef} scale={0.4}>
         <primitive object={clonedScene} />
       </group>
     </Float>
