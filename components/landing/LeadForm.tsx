@@ -11,19 +11,11 @@ const experienceLevels = [
   { value: "middle", label: "Middle+ разработчик" },
 ];
 
-const goals = [
-  { value: "first-job", label: "Найти первую работу в IT" },
-  { value: "switch", label: "Перейти в Go из другого языка" },
-  { value: "level-up", label: "Повысить уровень и зарплату" },
-  { value: "freelance", label: "Начать фриланс/свой проект" },
-];
-
 export function LeadForm() {
   const [formData, setFormData] = useState({
     name: "",
     contact: "",
     experience: "",
-    goal: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -40,20 +32,11 @@ export function LeadForm() {
     }
     
     if (!formData.contact.trim()) {
-      newErrors.contact = "Введите телефон или email";
-    } else if (
-      !formData.contact.includes("@") && 
-      !/^[\d\s\-+()]+$/.test(formData.contact)
-    ) {
-      newErrors.contact = "Введите корректный телефон или email";
+      newErrors.contact = "Введите Telegram или телефон";
     }
     
     if (!formData.experience) {
       newErrors.experience = "Выберите ваш уровень";
-    }
-    
-    if (!formData.goal) {
-      newErrors.goal = "Выберите вашу цель";
     }
 
     setErrors(newErrors);
@@ -108,7 +91,7 @@ export function LeadForm() {
 
             <p className="text-[#888] text-lg mb-8 leading-relaxed">
               Оставьте заявку, и мы свяжемся с вами в течение 24 часов. 
-              Обсудим ваши цели, подберём оптимальный формат обучения и ответим на все вопросы.
+              Подберём оптимальный формат обучения и ответим на все вопросы.
             </p>
 
             {/* Benefits */}
@@ -170,10 +153,10 @@ export function LeadForm() {
                       )}
                     </div>
 
-                    {/* Contact */}
+                    {/* Contact - Telegram */}
                     <div>
                       <label htmlFor="contact" className="block text-sm font-medium text-[#F5F2ED] mb-2">
-                        Телефон или Email
+                        Telegram или телефон
                       </label>
                       <input
                         type="text"
@@ -183,7 +166,7 @@ export function LeadForm() {
                         className={`w-full px-4 py-3 bg-[#1a1a1a] border rounded-lg text-[#F5F2ED] placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
                           errors.contact ? "border-red-500" : "border-[#333]"
                         }`}
-                        placeholder="+7 (999) 123-45-67 или email@example.com"
+                        placeholder="@username или +7 999 123-45-67"
                       />
                       {errors.contact && (
                         <p className="mt-1 text-sm text-red-500">{errors.contact}</p>
@@ -213,32 +196,6 @@ export function LeadForm() {
                       </div>
                       {errors.experience && (
                         <p className="mt-1 text-sm text-red-500">{errors.experience}</p>
-                      )}
-                    </div>
-
-                    {/* Goal */}
-                    <div>
-                      <label className="block text-sm font-medium text-[#F5F2ED] mb-2">
-                        Ваша цель
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {goals.map((goal) => (
-                          <button
-                            key={goal.value}
-                            type="button"
-                            onClick={() => handleInputChange("goal", goal.value)}
-                            className={`px-3 py-2 text-sm rounded-lg border transition-all text-left ${
-                              formData.goal === goal.value
-                                ? "bg-primary/20 border-primary text-[#F5F2ED]"
-                                : "bg-[#1a1a1a] border-[#333] text-[#888] hover:border-[#444]"
-                            }`}
-                          >
-                            {goal.label}
-                          </button>
-                        ))}
-                      </div>
-                      {errors.goal && (
-                        <p className="mt-1 text-sm text-red-500">{errors.goal}</p>
                       )}
                     </div>
 

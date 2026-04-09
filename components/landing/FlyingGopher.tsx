@@ -370,8 +370,8 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </div>
 
-            {/* Gopher Canvas */}
-            <div className="w-full h-full rounded-full overflow-hidden bg-background/50 backdrop-blur-sm border border-border/50 shadow-lg">
+            {/* Gopher Canvas - transparent, no frame */}
+            <div className="w-full h-full overflow-visible">
               <Canvas
                 camera={{ position: [0, 0, 5], fov: 50 }}
                 gl={{ antialias: true, alpha: true }}
