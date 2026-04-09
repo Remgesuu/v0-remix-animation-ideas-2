@@ -152,21 +152,13 @@ function GopherModel({
 
   return (
     <>
-      {/* Invisible hitbox for easier clicking - has pointer events */}
+      {/* Invisible hitbox for easier clicking */}
       <mesh
         ref={hitboxRef}
         onPointerDown={handlePointerDown}
         onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
         visible={false}
-        raycast={(raycaster, intersects) => {
-          // Enable raycasting even when canvas has pointerEvents: none
-          const tempMesh = hitboxRef.current;
-          if (tempMesh) {
-            const intersect = raycaster.intersectObject(tempMesh);
-            intersects.push(...intersect);
-          }
-        }}
       >
         <sphereGeometry args={[0.8, 16, 16]} />
         <meshBasicMaterial transparent opacity={0} />
@@ -407,7 +399,8 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 z-40 pointer-events-none"
+          className="fixed inset-0 z-40"
+          style={{ pointerEvents: isDragging ? 'auto' : 'none' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -416,7 +409,8 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
           {/* Close button for desktop */}
           <button
             onClick={handleClose}
-            className="fixed bottom-4 right-4 z-50 px-4 py-2 bg-card border border-border rounded-lg flex items-center gap-2 shadow-md hover:bg-muted transition-colors pointer-events-auto"
+            className="fixed bottom-4 right-4 z-50 px-4 py-2 bg-card border border-border rounded-lg flex items-center gap-2 shadow-md hover:bg-muted transition-colors"
+            style={{ pointerEvents: 'auto' }}
             aria-label="Hide Gopher"
           >
             <X className="w-4 h-4 text-muted-foreground" />
@@ -426,7 +420,7 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
           <Canvas
             camera={{ position: [0, 0, 8], fov: 45 }}
             gl={{ antialias: true, alpha: true }}
-            style={{ background: "transparent", pointerEvents: 'none' }}
+            style={{ background: "transparent", pointerEvents: 'auto' }}
           >
             <ambientLight intensity={0.6} />
             <directionalLight position={[10, 10, 5]} intensity={1.2} />
