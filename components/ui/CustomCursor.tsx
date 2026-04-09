@@ -81,13 +81,14 @@ export function CustomCursor() {
           translateX: "-50%",
           translateY: "-50%",
           borderColor: "rgba(201, 103, 58, 0.6)",
+          backgroundColor: "rgba(201, 103, 58, 0)",
         }}
         animate={{
           width: isHovering ? 48 : 32,
           height: isHovering ? 48 : 32,
           opacity: isHidden ? 0 : 1,
           borderColor: isHovering ? "rgba(201, 103, 58, 1)" : "rgba(201, 103, 58, 0.4)",
-          backgroundColor: isHovering ? "rgba(201, 103, 58, 0.1)" : "transparent",
+          backgroundColor: isHovering ? "rgba(201, 103, 58, 0.1)" : "rgba(201, 103, 58, 0)",
         }}
         transition={{ duration: 0.2, ease: "easeOut" }}
       />
