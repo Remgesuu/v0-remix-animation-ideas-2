@@ -6,6 +6,7 @@ import { useState, useCallback } from "react";
 import { HeroTerminal } from "./HeroTerminal";
 import { FlyingGopher } from "./FlyingGopher";
 import { useMousePosition } from "@/hooks/useMousePosition";
+import { MagneticButton } from "@/components/ui/MagneticButton";
 
 // Floating keywords
 const FLOATING_KEYWORDS = [
@@ -119,19 +120,23 @@ export function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <a
+                <MagneticButton
+                  as="a"
                   href="#lead-form"
                   className="group flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                  strength={0.35}
                 >
                   Оставить заявку
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </a>
-                <a
+                </MagneticButton>
+                <MagneticButton
+                  as="a"
                   href="#curriculum"
                   className="px-8 py-4 text-foreground border border-border rounded-lg font-medium hover:bg-card hover:border-primary/30 transition-all"
+                  strength={0.2}
                 >
                   Смотреть программу
-                </a>
+                </MagneticButton>
               </motion.div>
 
               {/* Trust Indicators */}

@@ -2,6 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { TiltCard } from "@/components/ui/TiltCard";
 
 const projects = [
   {
@@ -64,38 +65,41 @@ export function Portfolio() {
           {projects.map((project, index) => (
             <motion.div
               key={project.number}
-              className="group relative bg-[#222] rounded-xl p-6 border border-[#333] hover:border-[#C9673A]/50 transition-all duration-300"
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -4 }}
             >
-              {/* Project Number */}
-              <span className="text-5xl font-serif font-bold text-[#C9673A]/20 group-hover:text-[#C9673A]/30 transition-colors">
-                {project.number}
-              </span>
+              <TiltCard
+                className="group relative bg-[#222] rounded-xl p-6 border border-[#333] hover:border-[#C9673A]/50 transition-all duration-300 h-full"
+                maxTilt={6}
+              >
+                {/* Project Number */}
+                <span className="text-5xl font-serif font-bold text-[#C9673A]/20 group-hover:text-[#C9673A]/30 transition-colors">
+                  {project.number}
+                </span>
 
-              {/* Content */}
-              <div className="mt-4">
-                <h3 className="text-xl font-semibold text-[#F5F2ED] mb-2 group-hover:text-[#C9673A] transition-colors">
-                  {project.title}
-                </h3>
-                <p className="text-[#888] text-sm mb-4 leading-relaxed">
-                  {project.description}
-                </p>
+                {/* Content */}
+                <div className="mt-4">
+                  <h3 className="text-xl font-semibold text-[#F5F2ED] mb-2 group-hover:text-[#C9673A] transition-colors">
+                    {project.title}
+                  </h3>
+                  <p className="text-[#888] text-sm mb-4 leading-relaxed">
+                    {project.description}
+                  </p>
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2">
-                  {project.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2.5 py-1 text-xs font-medium text-[#888] bg-[#333] rounded-md"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-2">
+                    {project.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-2.5 py-1 text-xs font-medium text-[#888] bg-[#333] rounded-md"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </TiltCard>
             </motion.div>
           ))}
         </div>

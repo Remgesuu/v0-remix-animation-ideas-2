@@ -4,6 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Check, Sparkles } from "lucide-react";
 import { TiltCard } from "@/components/ui/TiltCard";
+import { MagneticButton } from "@/components/ui/MagneticButton";
 
 const plans = [
   {
@@ -105,18 +106,18 @@ export function Pricing() {
                     ))}
                   </ul>
 
-                  <motion.a
+                  <MagneticButton
+                    as="a"
                     href="#lead-form"
                     className={`block w-full py-3 px-6 rounded-lg font-medium text-center transition-colors ${
                       plan.popular
                         ? "bg-[#C9673A] text-white hover:bg-[#E8845B]"
                         : "bg-[#333] text-[#F5F2ED] hover:bg-[#444]"
                     }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    strength={0.25}
                   >
                     Выбрать тариф
-                  </motion.a>
+                  </MagneticButton>
                 </TiltCard>
               </motion.div>
             ))}

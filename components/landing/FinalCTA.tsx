@@ -3,6 +3,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { ArrowRight, MessageCircle } from "lucide-react";
+import { MagneticButton } from "@/components/ui/MagneticButton";
 
 export function FinalCTA() {
   const ref = useRef(null);
@@ -33,27 +34,27 @@ export function FinalCTA() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <motion.a
+            <MagneticButton
+              as="a"
               href="#lead-form"
               className="inline-flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              strength={0.35}
             >
               Оставить заявку
               <ArrowRight className="w-5 h-5" />
-            </motion.a>
+            </MagneticButton>
 
-            <motion.a
+            <MagneticButton
+              as="a"
               href="https://t.me/zaharich777"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-8 py-4 border border-border rounded-lg font-medium text-foreground hover:bg-card transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              strength={0.2}
             >
               <MessageCircle className="w-5 h-5" />
               Написать в Telegram
-            </motion.a>
+            </MagneticButton>
           </div>
         </motion.div>
       </div>
