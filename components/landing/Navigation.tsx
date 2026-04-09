@@ -28,24 +28,51 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Track active section
+  // Track active section based on scroll position
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(`#${entry.target.id}`);
+    const sectionIds = navLinks.map(link => link.href.replace("#", ""));
+    
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 150; // Offset for header
+      
+      // Find the current section
+      let currentSection = "";
+      
+      for (const id of sectionIds) {
+        const element = document.getElementById(id);
+        if (element) {
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            currentSection = `#${id}`;
+            break;
           }
-        });
-      },
-      { threshold: 0.3, rootMargin: "-100px 0px -50% 0px" }
-    );
+        }
+      }
+      
+      // If no section found and we're at the top, clear active state
+      // If we're past the last section, keep the last section active
+      if (!currentSection && scrollPosition > 200) {
+        // Find the closest section above current scroll position
+        for (let i = sectionIds.length - 1; i >= 0; i--) {
+          const element = document.getElementById(sectionIds[i]);
+          if (element && scrollPosition >= element.offsetTop) {
+            currentSection = `#${sectionIds[i]}`;
+            break;
+          }
+        }
+      }
+      
+      if (currentSection !== activeSection) {
+        setActiveSection(currentSection);
+      }
+    };
 
-    const sections = document.querySelectorAll("section[id]");
-    sections.forEach((section) => observer.observe(section));
-
-    return () => observer.disconnect();
-  }, []);
+    // Run once on mount
+    handleScroll();
+    
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [activeSection]);
 
   // Close mobile menu on scroll
   useEffect(() => {
