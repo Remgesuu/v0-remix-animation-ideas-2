@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Fraunces } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import { CustomCursor } from '@/components/ui/CustomCursor'
+
 import './globals.css'
 
 const _geist = Geist({ 
@@ -49,7 +49,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${_geist.variable} ${_geistMono.variable} ${_fraunces.variable} font-sans antialiased`}>
-        <CustomCursor />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

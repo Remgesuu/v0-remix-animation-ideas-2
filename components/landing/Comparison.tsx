@@ -177,37 +177,29 @@ function ROICalculator() {
         </div>
 
         {/* Results */}
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border">
-          <div className="text-center p-4 bg-muted rounded-lg">
-            <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-              <Clock className="w-4 h-4" />
-            </div>
-            <div className="text-2xl font-bold text-primary">{paybackMonthsBasic} мес</div>
-            <div className="text-xs text-muted-foreground">Окупаемость (базовый)</div>
+        <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
+          <div className="text-center p-3 bg-muted rounded-lg">
+            <Clock className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
+            <div className="text-lg font-bold text-primary whitespace-nowrap">{paybackMonthsBasic} мес</div>
+            <div className="text-[10px] text-muted-foreground leading-tight">Окупаемость (базовый)</div>
           </div>
-          <div className="text-center p-4 bg-primary/10 rounded-lg border border-primary/20">
-            <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-              <Clock className="w-4 h-4" />
-            </div>
-            <div className="text-2xl font-bold text-primary">{paybackMonthsVIP} мес</div>
-            <div className="text-xs text-muted-foreground">Окупаемость (VIP)</div>
+          <div className="text-center p-3 bg-primary/10 rounded-lg border border-primary/20">
+            <Clock className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
+            <div className="text-lg font-bold text-primary whitespace-nowrap">{paybackMonthsVIP} мес</div>
+            <div className="text-[10px] text-muted-foreground leading-tight">Окупаемость (VIP)</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-4 bg-muted rounded-lg">
-            <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-            <div className="text-xl font-bold text-foreground">+{monthlyIncrease.toLocaleString()} ₽</div>
-            <div className="text-xs text-muted-foreground">Прирост в месяц</div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="text-center p-3 bg-muted rounded-lg overflow-hidden">
+            <TrendingUp className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
+            <div className="text-base font-bold text-foreground truncate">+{monthlyIncrease.toLocaleString()} ₽</div>
+            <div className="text-[10px] text-muted-foreground leading-tight">Прирост/мес</div>
           </div>
-          <div className="text-center p-4 bg-muted rounded-lg">
-            <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
-              <DollarSign className="w-4 h-4" />
-            </div>
-            <div className="text-xl font-bold text-[#00D4AA]">+{fiveYearGain.toLocaleString()} ₽</div>
-            <div className="text-xs text-muted-foreground">Выгода за 5 лет</div>
+          <div className="text-center p-3 bg-muted rounded-lg overflow-hidden">
+            <DollarSign className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
+            <div className="text-base font-bold text-[#00D4AA] truncate">+{fiveYearGain.toLocaleString()} ₽</div>
+            <div className="text-[10px] text-muted-foreground leading-tight">За 5 лет</div>
           </div>
         </div>
       </div>
