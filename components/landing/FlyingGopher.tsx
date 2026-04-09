@@ -5,6 +5,7 @@ import { Canvas, useFrame, useThree, ThreeEvent } from "@react-three/fiber";
 import { useGLTF, Environment } from "@react-three/drei";
 import { motion, AnimatePresence } from "framer-motion";
 import * as THREE from "three";
+import { X, GripVertical } from "lucide-react";
 
 interface MousePosition {
   normalizedX: number;
@@ -192,19 +193,36 @@ function CameraController({ mousePosition }: { mousePosition: MousePosition }) {
 interface FlyingGopherProps {
   isVisible: boolean;
   mousePosition?: MousePosition;
+  onClose?: () => void;
 }
 
-export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
+export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopherProps) {
   const [mounted, setMounted] = useState(false);
   const [internalMouse, setInternalMouse] = useState({ normalizedX: 0.5, normalizedY: 0.5 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  // Mobile drag handle position (screen coords)
+  const [mobilePosition, setMobilePosition] = useState({ x: 0, y: 0 });
+  const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    // Check if mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    // Set initial mobile position to bottom right
+    setMobilePosition({ 
+      x: window.innerWidth - 120, 
+      y: window.innerHeight - 180 
+    });
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Mouse tracking
+  // Mouse/touch tracking
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setInternalMouse({
@@ -212,9 +230,24 @@ export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
         normalizedY: e.clientY / window.innerHeight,
       });
       
-      // Update drag position if dragging
-      if (isDragging) {
+      // Update drag position if dragging (desktop)
+      if (isDragging && !isMobile) {
         setDragPosition({ x: e.clientX, y: e.clientY });
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDragging && isMobile && e.touches[0]) {
+        const touch = e.touches[0];
+        setMobilePosition({
+          x: Math.max(60, Math.min(window.innerWidth - 60, touch.clientX)),
+          y: Math.max(60, Math.min(window.innerHeight - 60, touch.clientY)),
+        });
+        // Also update internal mouse for gopher to look at
+        setInternalMouse({
+          normalizedX: touch.clientX / window.innerWidth,
+          normalizedY: touch.clientY / window.innerHeight,
+        });
       }
     };
 
@@ -225,29 +258,143 @@ export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
       }
     };
 
+    const handleTouchEnd = () => {
+      if (isDragging) {
+        setIsDragging(false);
+      }
+    };
+
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd);
     
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isDragging]);
+  }, [isDragging, isMobile]);
 
   const handleDragStart = useCallback(() => {
     setIsDragging(true);
-    document.body.style.cursor = 'grabbing';
-  }, []);
+    if (!isMobile) {
+      document.body.style.cursor = 'grabbing';
+    }
+  }, [isMobile]);
 
   const handleDragEnd = useCallback(() => {
     setIsDragging(false);
     document.body.style.cursor = 'auto';
   }, []);
 
+  const handleMobileTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+    setIsDragging(true);
+    if (e.touches[0]) {
+      setMobilePosition({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      });
+    }
+  }, []);
+
+  const handleClose = useCallback(() => {
+    if (onClose) {
+      onClose();
+    } else {
+      setIsMinimized(true);
+    }
+  }, [onClose]);
+
+  const handleRestore = useCallback(() => {
+    setIsMinimized(false);
+  }, []);
+
   if (!mounted) return null;
 
   const effectiveMouse = mousePosition || internalMouse;
 
+  // Show minimized button when hidden
+  if (isMinimized) {
+    return (
+      <motion.button
+        className="fixed bottom-4 right-4 z-50 w-14 h-14 bg-[#00ADD8] rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+        onClick={handleRestore}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0, opacity: 0 }}
+        whileHover={{ scale: 1.05 }}
+        aria-label="Show Gopher"
+      >
+        <span className="text-2xl">🐹</span>
+      </motion.button>
+    );
+  }
+
+  // Mobile version with draggable container
+  if (isMobile) {
+    return (
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div
+            className="fixed z-50"
+            style={{ 
+              left: mobilePosition.x - 60, 
+              top: mobilePosition.y - 60,
+              width: 120,
+              height: 120,
+            }}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Close button */}
+            <button
+              onClick={handleClose}
+              className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-card border border-border rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform"
+              aria-label="Hide Gopher"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+
+            {/* Drag handle */}
+            <div
+              onTouchStart={handleMobileTouchStart}
+              className={`absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 w-12 h-6 bg-card border border-border rounded-full flex items-center justify-center shadow-md ${
+                isDragging ? 'bg-primary/20 border-primary' : ''
+              }`}
+            >
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
+
+            {/* Gopher Canvas */}
+            <div className="w-full h-full rounded-full overflow-hidden bg-background/50 backdrop-blur-sm border border-border/50 shadow-lg">
+              <Canvas
+                camera={{ position: [0, 0, 5], fov: 50 }}
+                gl={{ antialias: true, alpha: true }}
+                style={{ background: "transparent" }}
+              >
+                <ambientLight intensity={0.6} />
+                <directionalLight position={[10, 10, 5]} intensity={1.2} />
+                <directionalLight position={[-5, 5, -5]} intensity={0.4} color="#C9673A" />
+                <pointLight position={[0, 5, 0]} intensity={0.5} color="#00D4AA" />
+
+                <Suspense fallback={null}>
+                  <MobileGopherModel mousePosition={effectiveMouse} />
+                  <Environment preset="city" />
+                </Suspense>
+              </Canvas>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    );
+  }
+
+  // Desktop version
   return (
     <AnimatePresence>
       {isVisible && (
@@ -259,6 +406,17 @@ export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
+          {/* Close button for desktop */}
+          <button
+            onClick={handleClose}
+            className="fixed bottom-4 right-4 z-50 px-4 py-2 bg-card border border-border rounded-lg flex items-center gap-2 shadow-md hover:bg-muted transition-colors"
+            style={{ pointerEvents: 'auto' }}
+            aria-label="Hide Gopher"
+          >
+            <X className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Скрыть Gopher</span>
+          </button>
+
           <Canvas
             camera={{ position: [0, 0, 8], fov: 45 }}
             gl={{ antialias: true, alpha: true }}
@@ -286,6 +444,42 @@ export function FlyingGopher({ isVisible, mousePosition }: FlyingGopherProps) {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+// Simplified mobile gopher that stays centered in its container
+function MobileGopherModel({ mousePosition }: { mousePosition: MousePosition }) {
+  const { scene } = useGLTF("/models/go_gopher.glb");
+  const groupRef = useRef<THREE.Group>(null);
+  const breathPhase = useRef(0);
+
+  const clonedScene = scene.clone();
+
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+
+    // Breathing animation
+    breathPhase.current += delta * 2.5;
+    const breathScale = 1 + Math.sin(breathPhase.current) * 0.025;
+
+    groupRef.current.scale.setScalar(0.6 * breathScale);
+
+    // Look toward cursor direction
+    const targetX = (mousePosition.normalizedX - 0.5) * 0.5;
+    const targetY = -(mousePosition.normalizedY - 0.5) * 0.3;
+    
+    groupRef.current.rotation.y += (targetX - groupRef.current.rotation.y) * 0.1;
+    groupRef.current.rotation.x += (targetY - groupRef.current.rotation.x) * 0.1;
+
+    // Subtle floating
+    const time = Date.now() * 0.001;
+    groupRef.current.position.y = Math.sin(time * 1.8) * 0.05;
+  });
+
+  return (
+    <group ref={groupRef} scale={0.6} position={[0, 0, 0]}>
+      <primitive object={clonedScene} />
+    </group>
   );
 }
 

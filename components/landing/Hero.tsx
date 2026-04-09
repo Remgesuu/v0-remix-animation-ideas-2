@@ -27,10 +27,14 @@ export function Hero() {
     setGopherVisible(true);
   }, []);
 
+  const handleGopherClose = useCallback(() => {
+    setGopherVisible(false);
+  }, []);
+
   return (
     <>
       {/* Flying Gopher - fixed position, follows scroll + mouse */}
-      <FlyingGopher isVisible={gopherVisible} mousePosition={mousePosition} />
+      <FlyingGopher isVisible={gopherVisible} mousePosition={mousePosition} onClose={handleGopherClose} />
       
       <section className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden bg-background">
         {/* Subtle background texture */}
@@ -184,7 +188,7 @@ export function Hero() {
               </motion.div>
               
               {/* Gopher launch indicator */}
-              {goButtonClicked && (
+              {goButtonClicked && gopherVisible && (
                 <motion.div
                   className="absolute right-0 -bottom-16 bg-[#00ADD8] text-[#0D0D0D] rounded-lg px-4 py-2 text-sm font-semibold shadow-lg"
                   initial={{ opacity: 0, y: -10, scale: 0.8 }}
@@ -197,6 +201,22 @@ export function Hero() {
                   </div>
                   <div className="text-xs opacity-70 mt-0.5">Скролль вниз</div>
                 </motion.div>
+              )}
+              
+              {/* Show gopher again button */}
+              {goButtonClicked && !gopherVisible && (
+                <motion.button
+                  onClick={() => setGopherVisible(true)}
+                  className="absolute right-0 -bottom-16 bg-[#00ADD8] text-[#0D0D0D] rounded-lg px-4 py-2 text-sm font-semibold shadow-lg hover:bg-[#00ADD8]/90 active:scale-95 transition-all"
+                  initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🐹</span>
+                    Вернуть Gopher
+                  </div>
+                </motion.button>
               )}
             </motion.div>
           </div>
