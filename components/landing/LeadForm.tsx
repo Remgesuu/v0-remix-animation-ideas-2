@@ -20,6 +20,7 @@ export function LeadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -49,12 +50,40 @@ export function LeadForm() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const response = await fetch("/api/lead", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          contact: formData.contact.trim(),
+          experience: formData.experience,
+        }),
+      });
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle server-side validation errors
+        if (data.errors) {
+          setErrors(data.errors);
+        }
+        throw new Error(data.error || "Не удалось отправить заявку");
+      }
+
+      setIsSubmitted(true);
+    } catch (error) {
+      const message = error instanceof Error 
+        ? error.message 
+        : "Произошла ошибка. Попробуйте ещё раз или напишите напрямую в Telegram.";
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -223,6 +252,27 @@ export function LeadForm() {
                         </>
                       )}
                     </motion.button>
+
+                    {submitError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg"
+                      >
+                        <p className="text-sm text-red-400 text-center">{submitError}</p>
+                        <p className="text-xs text-red-400/70 text-center mt-1">
+                          Или напишите напрямую:{" "}
+                          <a 
+                            href="https://t.me/zaharich777" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="underline hover:text-red-300"
+                          >
+                            @zaharich777
+                          </a>
+                        </p>
+                      </motion.div>
+                    )}
 
                     <p className="text-xs text-[#666] text-center">
                       Нажимая кнопку, вы соглашаетесь с политикой обработки персональных данных
