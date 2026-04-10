@@ -1,8 +1,13 @@
 "use client";
 
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { Check, X, Minus, Calculator, TrendingUp, Clock, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
+
+// Format number with spaces (Russian locale style) - consistent on server and client
+function formatNumber(num: number): string {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
 
 const comparisonData = {
   criteria: [
@@ -235,7 +240,7 @@ function ROICalculator() {
         {/* Current Salary */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Текущая зарплата: {currentSalary.toLocaleString()} ₽
+            Текущая зарплата: {formatNumber(currentSalary)} ₽
           </label>
           <input
             type="range"
@@ -255,7 +260,7 @@ function ROICalculator() {
         {/* Target Salary */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Целевая зарплата: {targetSalary.toLocaleString()} ₽
+            Целевая зарплата: {formatNumber(targetSalary)} ₽
           </label>
           <input
             type="range"
@@ -289,12 +294,12 @@ function ROICalculator() {
         <div className="grid grid-cols-2 gap-3">
           <div className="text-center p-3 bg-muted rounded-lg overflow-hidden">
             <TrendingUp className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-            <div className="text-base font-bold text-foreground truncate">+{monthlyIncrease.toLocaleString()} ₽</div>
+            <div className="text-base font-bold text-foreground truncate">+{formatNumber(monthlyIncrease)} ₽</div>
             <div className="text-[10px] text-muted-foreground leading-tight">Прирост/мес</div>
           </div>
           <div className="text-center p-3 bg-muted rounded-lg overflow-hidden">
             <DollarSign className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-            <div className="text-base font-bold text-[#00D4AA] truncate">+{fiveYearGain.toLocaleString()} ₽</div>
+            <div className="text-base font-bold text-[#00D4AA] truncate">+{formatNumber(fiveYearGain)} ₽</div>
             <div className="text-[10px] text-muted-foreground leading-tight">За 5 лет</div>
           </div>
         </div>
