@@ -3,6 +3,7 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { Quote, ExternalLink, Briefcase, TrendingUp, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { CountUp } from "@/components/ui/CountUp";
 
 // Real testimonials data structure
 const testimonials = [
@@ -206,19 +207,27 @@ export function Testimonials() {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <div className="text-center">
-            <div className="text-3xl md:text-4xl font-serif font-bold text-primary">50+</div>
+            <div className="text-3xl md:text-4xl font-serif font-bold text-primary">
+              <CountUp end={50} duration={2} suffix="+" />
+            </div>
             <div className="text-sm text-muted-foreground">выпускников</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl md:text-4xl font-serif font-bold text-primary">94%</div>
+            <div className="text-3xl md:text-4xl font-serif font-bold text-primary">
+              <CountUp end={94} duration={2} suffix="%" />
+            </div>
             <div className="text-sm text-muted-foreground">трудоустроились</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl md:text-4xl font-serif font-bold text-primary">x2.1</div>
+            <div className="text-3xl md:text-4xl font-serif font-bold text-primary">
+              <CountUp end={2.1} duration={2} decimals={1} prefix="x" />
+            </div>
             <div className="text-sm text-muted-foreground">рост зарплаты</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl md:text-4xl font-serif font-bold text-primary">5.5</div>
+            <div className="text-3xl md:text-4xl font-serif font-bold text-primary">
+              <CountUp end={5.5} duration={2} decimals={1} />
+            </div>
             <div className="text-sm text-muted-foreground">мес. до оффера</div>
           </div>
         </motion.div>
@@ -292,6 +301,24 @@ export function Testimonials() {
               </div>
             ))}
           </div>
+        </motion.div>
+
+        {/* Contextual CTA */}
+        <motion.div
+          className="mt-12 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <p className="text-muted-foreground mb-4">
+            Хотите быть следующим?
+          </p>
+          <a
+            href="#lead-form"
+            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Присоединиться к выпускникам
+          </a>
         </motion.div>
       </div>
     </section>

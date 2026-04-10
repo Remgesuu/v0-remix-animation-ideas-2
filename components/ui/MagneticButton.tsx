@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState, useCallback, ReactNode, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, useSpring } from "framer-motion";
 
 interface MagneticButtonProps {
   children: ReactNode;
   className?: string;
   strength?: number;
+  radius?: number; // Activation radius
   as?: "button" | "a";
   href?: string;
   target?: string;
@@ -15,10 +16,18 @@ interface MagneticButtonProps {
   disabled?: boolean;
 }
 
+// Eased falloff function for smooth magnetic release
+function easedFalloff(distance: number, radius: number): number {
+  const normalized = Math.min(distance / radius, 1);
+  // Cubic ease-out for smooth, natural decay
+  return 1 - (normalized * normalized * normalized);
+}
+
 export function MagneticButton({
   children,
   className = "",
   strength = 0.4,
+  radius = 100,
   as = "button",
   href,
   target,
@@ -27,13 +36,20 @@ export function MagneticButton({
   disabled = false,
 }: MagneticButtonProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check for mobile on mount
+  // Spring physics - higher damping for smoother return without jitter
+  const springConfig = { stiffness: 300, damping: 28, mass: 0.5 };
+  const x = useSpring(0, springConfig);
+  const y = useSpring(0, springConfig);
+
+  // Check for mobile/touch on mount
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+      // More robust touch detection
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isNarrow = window.innerWidth < 768;
+      setIsMobile(hasTouch || isNarrow);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -42,7 +58,7 @@ export function MagneticButton({
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
-      if (!ref.current || isMobile) return;
+      if (!ref.current || isMobile || disabled) return;
 
       const rect = ref.current.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
@@ -50,21 +66,48 @@ export function MagneticButton({
 
       const distanceX = e.clientX - centerX;
       const distanceY = e.clientY - centerY;
+      const distance = Math.sqrt(distanceX ** 2 + distanceY ** 2);
 
-      setPosition({
-        x: distanceX * strength,
-        y: distanceY * strength,
-      });
+      // Eased falloff for smooth magnetic release
+      const falloff = easedFalloff(distance, radius);
+      
+      x.set(distanceX * strength * falloff);
+      y.set(distanceY * strength * falloff);
     },
-    [strength, isMobile]
+    [strength, radius, isMobile, disabled, x, y]
   );
 
   const handleMouseLeave = useCallback(() => {
-    setPosition({ x: 0, y: 0 });
-  }, []);
+    // Smooth return to center
+    x.set(0);
+    y.set(0);
+  }, [x, y]);
 
   const MotionComponent = as === "a" ? motion.a : motion.button;
 
+  // On mobile: simple tap animation, no magnetic effect
+  if (isMobile) {
+    return (
+      <MotionComponent
+        href={as === "a" ? href : undefined}
+        target={as === "a" ? target : undefined}
+        rel={as === "a" ? rel : undefined}
+        onClick={onClick}
+        disabled={disabled}
+        className={className}
+        whileTap={{ scale: 0.96 }}
+        transition={{
+          type: "spring",
+          stiffness: 500,
+          damping: 30,
+        }}
+      >
+        {children}
+      </MotionComponent>
+    );
+  }
+
+  // Desktop: full magnetic effect
   return (
     <motion.div
       ref={ref}
@@ -79,17 +122,16 @@ export function MagneticButton({
         onClick={onClick}
         disabled={disabled}
         className={className}
-        animate={{
-          x: position.x,
-          y: position.y,
-        }}
+        style={{ x, y }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.97 }}
         transition={{
-          type: "spring",
-          stiffness: 350,
-          damping: 15,
-          mass: 0.5,
+          scale: {
+            type: "spring",
+            stiffness: 400,
+            damping: 25,
+          },
         }}
-        whileTap={{ scale: 0.95 }}
       >
         {children}
       </MotionComponent>

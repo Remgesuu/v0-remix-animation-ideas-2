@@ -4,13 +4,14 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { MagneticButton } from "@/components/ui/MagneticButton";
+import { fadeUp, viewportOnce, transitions } from "@/lib/animations";
 
 export function FinalCTA() {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, viewportOnce);
 
   return (
-    <section ref={ref} className="py-24 md:py-32 bg-primary/5 relative overflow-hidden">
+    <section ref={ref} className="py-24 md:py-32 bg-primary/5 relative overflow-hidden grain">
       {/* Decorative elements */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
@@ -20,9 +21,9 @@ export function FinalCTA() {
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
           className="max-w-2xl mx-auto text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
+          variants={fadeUp}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
         >
           <h2 className="text-3xl md:text-5xl font-serif text-foreground mb-6 text-balance">
             Готовы начать путь в{" "}

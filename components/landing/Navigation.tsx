@@ -156,46 +156,72 @@ export function Navigation() {
           </svg>
         </button>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Full screen dark overlay */}
         <AnimatePresence>
           {mobileMenuOpen && (
-            <motion.div
-              className="absolute top-full left-0 right-0 bg-background border-b border-border p-6 lg:hidden shadow-lg"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <div className="space-y-1">
-                {navLinks.map((link, index) => (
-                  <motion.a
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`block py-3 px-4 text-lg font-medium rounded-lg transition-colors ${
-                      activeSection === link.href
-                        ? "text-primary bg-primary/10"
-                        : "text-foreground hover:bg-muted"
-                    }`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    {link.label}
-                  </motion.a>
-                ))}
-              </div>
-              
-              <motion.a
-                href="#lead-form"
+            <>
+              {/* Backdrop */}
+              <motion.div
+                className="fixed inset-0 bg-surface-dark/98 backdrop-blur-xl z-40 lg:hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
                 onClick={() => setMobileMenuOpen(false)}
-                className="block mt-4 px-5 py-3 bg-primary text-primary-foreground rounded-lg text-center font-medium"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+              />
+              
+              {/* Menu content */}
+              <motion.div
+                className="fixed inset-0 z-50 lg:hidden flex flex-col items-center justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
               >
-                Оставить заявку
-              </motion.a>
-            </motion.div>
+                {/* Close button */}
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="absolute top-4 right-4 p-3 text-text-dark-secondary hover:text-text-dark-primary transition-colors"
+                  aria-label="Close menu"
+                >
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                <nav className="flex flex-col items-center gap-6">
+                  {navLinks.map((link, index) => (
+                    <motion.a
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`text-2xl font-medium transition-colors ${
+                        activeSection === link.href
+                          ? "text-primary"
+                          : "text-text-dark-secondary hover:text-text-dark-primary"
+                      }`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                      {link.label}
+                    </motion.a>
+                  ))}
+                </nav>
+                
+                <motion.a
+                  href="#lead-form"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="mt-10 px-8 py-4 bg-primary text-primary-foreground rounded-lg text-lg font-medium"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  Оставить заявку
+                </motion.a>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </nav>

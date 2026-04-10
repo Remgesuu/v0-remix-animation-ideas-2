@@ -94,7 +94,7 @@ export function LeadForm() {
   };
 
   return (
-    <section ref={ref} id="lead-form" className="py-24 md:py-32 bg-[#18181B] relative overflow-hidden">
+    <section ref={ref} id="lead-form" className="py-24 md:py-32 dark-section relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -113,31 +113,31 @@ export function LeadForm() {
               Бесплатная консультация
             </span>
             
-            <h2 className="text-3xl md:text-5xl font-serif text-[#F5F2ED] mb-6 text-balance">
+            <h2 className="text-3xl md:text-5xl font-serif text-text-dark-primary mb-6 text-balance">
               Начните свой путь в{" "}
               <span className="text-primary">Go-разработке</span>
             </h2>
 
-            <p className="text-[#888] text-lg mb-8 leading-relaxed">
+            <p className="text-text-dark-secondary text-lg mb-8 leading-relaxed">
               Оставьте заявку, и мы свяжемся с вами в течение 24 часов. 
               Подберём оптимальный формат обучения и ответим на все вопросы.
             </p>
 
             {/* Benefits */}
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-[#AAA]">
+              <div className="flex items-center gap-3 text-text-dark-secondary">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Clock className="w-5 h-5 text-primary" />
                 </div>
                 <span>Ответим в течение 24 часов</span>
               </div>
-              <div className="flex items-center gap-3 text-[#AAA]">
+              <div className="flex items-center gap-3 text-text-dark-secondary">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Users className="w-5 h-5 text-primary" />
                 </div>
                 <span>Персональный разбор вашей ситуации</span>
               </div>
-              <div className="flex items-center gap-3 text-[#AAA]">
+              <div className="flex items-center gap-3 text-text-dark-secondary">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <Shield className="w-5 h-5 text-primary" />
                 </div>
@@ -152,7 +152,7 @@ export function LeadForm() {
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <div className="bg-[#222] rounded-2xl p-8 border border-[#333]">
+            <div className="bg-surface-dark-elevated rounded-2xl p-8 border border-surface-dark-border">
               <AnimatePresence mode="wait">
                 {!isSubmitted ? (
                   <motion.form
@@ -164,7 +164,7 @@ export function LeadForm() {
                   >
                     {/* Name */}
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-[#F5F2ED] mb-2">
+                      <label htmlFor="name" className="block text-sm font-medium text-text-dark-primary mb-2">
                         Ваше имя
                       </label>
                       <input
@@ -172,8 +172,8 @@ export function LeadForm() {
                         id="name"
                         value={formData.name}
                         onChange={(e) => handleInputChange("name", e.target.value)}
-                        className={`w-full px-4 py-3 bg-[#1a1a1a] border rounded-lg text-[#F5F2ED] placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
-                          errors.name ? "border-red-500" : "border-[#333]"
+                        className={`w-full px-4 py-3 bg-surface-dark border rounded-lg text-text-dark-primary placeholder-text-dark-muted focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
+                          errors.name ? "border-red-500" : "border-surface-dark-border"
                         }`}
                         placeholder="Как к вам обращаться?"
                       />
@@ -184,7 +184,7 @@ export function LeadForm() {
 
                     {/* Contact - Telegram */}
                     <div>
-                      <label htmlFor="contact" className="block text-sm font-medium text-[#F5F2ED] mb-2">
+                      <label htmlFor="contact" className="block text-sm font-medium text-text-dark-primary mb-2">
                         Telegram или телефон
                       </label>
                       <input
@@ -192,8 +192,8 @@ export function LeadForm() {
                         id="contact"
                         value={formData.contact}
                         onChange={(e) => handleInputChange("contact", e.target.value)}
-                        className={`w-full px-4 py-3 bg-[#1a1a1a] border rounded-lg text-[#F5F2ED] placeholder-[#666] focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
-                          errors.contact ? "border-red-500" : "border-[#333]"
+                        className={`w-full px-4 py-3 bg-surface-dark border rounded-lg text-text-dark-primary placeholder-text-dark-muted focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all ${
+                          errors.contact ? "border-red-500" : "border-surface-dark-border"
                         }`}
                         placeholder="@username или +7 999 123-45-67"
                       />
@@ -204,7 +204,7 @@ export function LeadForm() {
 
                     {/* Experience */}
                     <div>
-                      <label className="block text-sm font-medium text-[#F5F2ED] mb-2">
+                      <label className="block text-sm font-medium text-text-dark-primary mb-2">
                         Ваш текущий уровень
                       </label>
                       <div className="grid grid-cols-2 gap-2">
@@ -215,8 +215,8 @@ export function LeadForm() {
                             onClick={() => handleInputChange("experience", level.value)}
                             className={`px-3 py-2 text-sm rounded-lg border transition-all text-left ${
                               formData.experience === level.value
-                                ? "bg-primary/20 border-primary text-[#F5F2ED]"
-                                : "bg-[#1a1a1a] border-[#333] text-[#888] hover:border-[#444]"
+                                ? "bg-primary/20 border-primary text-text-dark-primary"
+                                : "bg-surface-dark border-surface-dark-border text-text-dark-secondary hover:border-surface-dark-border-hover"
                             }`}
                           >
                             {level.label}
@@ -274,7 +274,7 @@ export function LeadForm() {
                       </motion.div>
                     )}
 
-                    <p className="text-xs text-[#666] text-center">
+                    <p className="text-xs text-text-dark-muted text-center">
                       Нажимая кнопку, вы соглашаетесь с политикой обработки персональных данных
                     </p>
                   </motion.form>
@@ -286,23 +286,23 @@ export function LeadForm() {
                     animate={{ opacity: 1, y: 0 }}
                   >
                     <motion.div
-                      className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#00D4AA]/20 flex items-center justify-center"
+                      className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-500/20 flex items-center justify-center"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 300, delay: 0.2 }}
                     >
-                      <CheckCircle className="w-10 h-10 text-[#00D4AA]" />
+                      <CheckCircle className="w-10 h-10 text-emerald-500" />
                     </motion.div>
                     
-                    <h3 className="text-2xl font-serif font-semibold text-[#F5F2ED] mb-3">
+                    <h3 className="text-2xl font-serif font-semibold text-text-dark-primary mb-3">
                       Заявка отправлена!
                     </h3>
-                    <p className="text-[#888] mb-6">
+                    <p className="text-text-dark-secondary mb-6">
                       Мы свяжемся с вами в течение 24 часов для обсуждения вашего обучения.
                     </p>
 
-                    <div className="p-4 bg-[#1a1a1a] rounded-lg border border-[#333]">
-                      <p className="text-sm text-[#666] mb-2">Или напишите нам напрямую:</p>
+                    <div className="p-4 bg-surface-dark rounded-lg border border-surface-dark-border">
+                      <p className="text-sm text-text-dark-muted mb-2">Или напишите нам напрямую:</p>
                       <a
                         href="https://t.me/zaharich777"
                         target="_blank"
