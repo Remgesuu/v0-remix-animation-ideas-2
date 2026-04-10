@@ -1,12 +1,13 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { HeroTerminal } from "./HeroTerminal";
 import { FlyingGopher } from "./FlyingGopher";
 import { useMousePosition } from "@/hooks/useMousePosition";
 import { MagneticButton } from "@/components/ui/MagneticButton";
+import { durations, easings } from "@/lib/animations";
 
 // Floating keywords
 const FLOATING_KEYWORDS = [
@@ -22,6 +23,18 @@ export function Hero() {
   const [gopherVisible, setGopherVisible] = useState(false);
   const [goButtonClicked, setGoButtonClicked] = useState(false);
   const mousePosition = useMousePosition();
+  const sectionRef = useRef<HTMLElement>(null);
+  
+  // Scroll-linked parallax for depth
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  
+  // Subtle parallax transforms - terminal rises slower than content
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, -60]);
+  const terminalY = useTransform(scrollYProgress, [0, 1], [0, -30]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.6]);
   
   const handleGoClick = useCallback(() => {
     setGoButtonClicked(true);
@@ -37,9 +50,15 @@ export function Hero() {
       {/* Flying Gopher - fixed position, follows scroll + mouse */}
       <FlyingGopher isVisible={gopherVisible} mousePosition={mousePosition} onClose={handleGopherClose} />
       
-      <section className="relative min-h-screen flex items-center justify-center pt-16 pb-8 lg:pb-0 overflow-hidden bg-background">
+      <section 
+        ref={sectionRef}
+        className="relative min-h-screen flex items-center justify-center pt-16 pb-8 lg:pb-0 overflow-hidden bg-background"
+      >
         {/* Subtle background texture */}
-        <div className="absolute inset-0 grain opacity-30" />
+        <motion.div 
+          className="absolute inset-0 grain" 
+          style={{ opacity: useTransform(bgOpacity, (v) => v * 0.3) }}
+        />
         
         {/* Animated grid background */}
         <div className="absolute inset-0 overflow-hidden">
@@ -78,7 +97,10 @@ export function Hero() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left side - Content */}
-            <div className="text-center lg:text-left">
+            <motion.div 
+              className="text-center lg:text-left"
+              style={{ y: contentY }}
+            >
               {/* Eyebrow with social proof */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -164,14 +186,15 @@ export function Hero() {
                   <div className="text-sm text-muted-foreground">персональный ментор</div>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
 
             {/* Right side - Interactive Terminal */}
             <motion.div
               className="relative"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              initial={{ opacity: 0, x: 30, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: durations.slow, delay: 0.3, ease: easings.reveal }}
+              style={{ y: terminalY }}
             >
               <HeroTerminal 
                 onGoClick={handleGoClick} 
