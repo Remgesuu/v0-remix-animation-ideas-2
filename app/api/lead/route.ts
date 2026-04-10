@@ -8,13 +8,17 @@ const experienceLabels: Record<string, string> = {
 };
 
 export async function POST(request: NextRequest) {
+  console.log("[v0] API Lead: POST request received");
+  
   try {
     // Check environment variables
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
+    console.log("[v0] API Lead: botToken exists:", !!botToken, "chatId:", chatId);
+
     if (!botToken || !chatId) {
-      console.error("[API Lead] Missing Telegram environment variables");
+      console.error("[v0] API Lead: Missing Telegram environment variables");
       return NextResponse.json(
         { error: "Сервер временно недоступен. Попробуйте позже или напишите напрямую в Telegram." },
         { status: 500 }
@@ -76,6 +80,8 @@ export async function POST(request: NextRequest) {
 🌐 *Источник:* Landing Form`;
 
     // Send to Telegram
+    console.log("[v0] API Lead: Sending to Telegram, chatId:", chatId);
+    
     const telegramResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
       {
@@ -91,15 +97,18 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    console.log("[v0] API Lead: Telegram response status:", telegramResponse.status);
+
     if (!telegramResponse.ok) {
       const errorData = await telegramResponse.json();
-      console.error("[API Lead] Telegram API error:", errorData);
+      console.error("[v0] API Lead: Telegram API error:", JSON.stringify(errorData));
       return NextResponse.json(
         { error: "Не удалось отправить заявку. Попробуйте позже или напишите напрямую в Telegram." },
         { status: 500 }
       );
     }
 
+    console.log("[v0] API Lead: Success!");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[API Lead] Unexpected error:", error);
