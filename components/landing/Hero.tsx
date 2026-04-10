@@ -31,10 +31,11 @@ export function Hero() {
     offset: ["start start", "end start"],
   });
   
-  // Subtle parallax transforms - terminal rises slower than content
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, -60]);
-  const terminalY = useTransform(scrollYProgress, [0, 1], [0, -30]);
-  const bgOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.6]);
+  // Subtle parallax transforms - viewport-relative for consistent feel across screen sizes
+  // Using smaller values (max 5vh equivalent) to feel subtle not jarring
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "-4%"]);
+  const terminalY = useTransform(scrollYProgress, [0, 1], ["0%", "-2%"]);
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0.7]);
   
   const handleGoClick = useCallback(() => {
     setGoButtonClicked(true);

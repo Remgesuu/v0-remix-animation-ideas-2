@@ -1,8 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, ReactNode, useEffect } from "react";
-import { motion, useSpring, useTransform } from "framer-motion";
-import { easings } from "@/lib/animations";
+import { motion, useSpring } from "framer-motion";
 
 interface MagneticButtonProps {
   children: ReactNode;
@@ -15,6 +14,13 @@ interface MagneticButtonProps {
   rel?: string;
   onClick?: () => void;
   disabled?: boolean;
+}
+
+// Eased falloff function for smooth magnetic release
+function easedFalloff(distance: number, radius: number): number {
+  const normalized = Math.min(distance / radius, 1);
+  // Cubic ease-out for smooth, natural decay
+  return 1 - (normalized * normalized * normalized);
 }
 
 export function MagneticButton({
@@ -30,19 +36,20 @@ export function MagneticButton({
   disabled = false,
 }: MagneticButtonProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
-  // Spring physics for smooth resistance feel
-  const springConfig = { stiffness: 350, damping: 20, mass: 0.5 };
+  // Spring physics - higher damping for smoother return without jitter
+  const springConfig = { stiffness: 300, damping: 28, mass: 0.5 };
   const x = useSpring(0, springConfig);
   const y = useSpring(0, springConfig);
 
-  // Check for mobile on mount
+  // Check for mobile/touch on mount
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window);
+      // More robust touch detection
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isNarrow = window.innerWidth < 768;
+      setIsMobile(hasTouch || isNarrow);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -61,8 +68,8 @@ export function MagneticButton({
       const distanceY = e.clientY - centerY;
       const distance = Math.sqrt(distanceX ** 2 + distanceY ** 2);
 
-      // Apply falloff based on distance from center
-      const falloff = Math.max(0, 1 - distance / radius);
+      // Eased falloff for smooth magnetic release
+      const falloff = easedFalloff(distance, radius);
       
       x.set(distanceX * strength * falloff);
       y.set(distanceY * strength * falloff);
@@ -70,23 +77,41 @@ export function MagneticButton({
     [strength, radius, isMobile, disabled, x, y]
   );
 
-  const handleMouseEnter = useCallback(() => {
-    setIsHovered(true);
-  }, []);
-
   const handleMouseLeave = useCallback(() => {
+    // Smooth return to center
     x.set(0);
     y.set(0);
-    setIsHovered(false);
   }, [x, y]);
 
   const MotionComponent = as === "a" ? motion.a : motion.button;
 
+  // On mobile: simple tap animation, no magnetic effect
+  if (isMobile) {
+    return (
+      <MotionComponent
+        href={as === "a" ? href : undefined}
+        target={as === "a" ? target : undefined}
+        rel={as === "a" ? rel : undefined}
+        onClick={onClick}
+        disabled={disabled}
+        className={className}
+        whileTap={{ scale: 0.96 }}
+        transition={{
+          type: "spring",
+          stiffness: 500,
+          damping: 30,
+        }}
+      >
+        {children}
+      </MotionComponent>
+    );
+  }
+
+  // Desktop: full magnetic effect
   return (
     <motion.div
       ref={ref}
       onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className="inline-block"
     >

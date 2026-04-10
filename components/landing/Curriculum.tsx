@@ -121,7 +121,11 @@ function ModuleCard({ module, index, isOpen, onToggle, totalModules }: {
       className="relative"
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      transition={{ 
+        duration: 0.5, 
+        // Cap stagger delay at 0.4s max to prevent long waits on last items
+        delay: Math.min(index * 0.08, 0.4) 
+      }}
     >
       {/* Timeline connector */}
       <div className="absolute left-6 top-0 bottom-0 w-px hidden md:block">

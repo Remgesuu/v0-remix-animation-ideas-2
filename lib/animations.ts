@@ -45,6 +45,16 @@ export const staggers = {
   relaxed: 0.12,  // Section elements
 };
 
+// Helper to calculate capped stagger delay
+// Prevents last items in long lists from appearing too late
+export function cappedStagger(
+  index: number, 
+  staggerDelay: number = staggers.normal, 
+  maxDelay: number = 0.4
+): number {
+  return Math.min(index * staggerDelay, maxDelay);
+}
+
 // === TRANSITION PRESETS ===
 export const transitions = {
   micro: { duration: durations.micro, ease: easings.interaction } as Transition,
