@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, Suspense, useCallback } from "react";
 import { Canvas, useFrame, useThree, ThreeEvent } from "@react-three/fiber";
 import { useGLTF, Environment } from "@react-three/drei";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useSpring, useMotionValue } from "framer-motion";
 import * as THREE from "three";
 import { X, GripVertical } from "lucide-react";
 
@@ -16,70 +16,52 @@ interface GopherModelProps {
   isVisible: boolean;
   mousePosition: MousePosition;
   isDragging: boolean;
-  dragPosition: { x: number; y: number } | null;
-  onDragStart: () => void;
+  dragOffset: { x: number; y: number };
+  onDragStart: (offsetX: number, offsetY: number) => void;
   onDragEnd: () => void;
 }
+
+// Container size for the floating Canvas viewport
+const VIEWPORT_SIZE = 280;
+const VIEWPORT_HALF = VIEWPORT_SIZE / 2;
 
 function GopherModel({ 
   isVisible, 
   mousePosition, 
   isDragging,
-  dragPosition,
+  dragOffset,
   onDragStart,
   onDragEnd
 }: GopherModelProps) {
   const { scene } = useGLTF("/models/go_gopher.glb");
   const groupRef = useRef<THREE.Group>(null);
   const hitboxRef = useRef<THREE.Mesh>(null);
-  const { viewport, camera } = useThree();
+  const { viewport } = useThree();
 
   const clonedScene = scene.clone();
 
-  // Position refs - start in bottom right corner
-  const basePosition = useRef({ x: viewport.width * 0.35, y: -viewport.height * 0.25, z: 0 });
-  const currentPosition = useRef({ x: viewport.width * 0.35, y: -viewport.height * 0.25, z: 0 });
-  const targetLookAt = useRef(new THREE.Vector3(0, 0, 5));
-  const currentLookAt = useRef(new THREE.Vector3(0, 0, 5));
   const breathPhase = useRef(0);
   const [isHovered, setIsHovered] = useState(false);
-
-  // Update base position when dragging ends
-  useEffect(() => {
-    if (!isDragging && dragPosition) {
-      // Convert screen position to 3D world position
-      const x = (dragPosition.x / window.innerWidth - 0.5) * viewport.width;
-      const y = -(dragPosition.y / window.innerHeight - 0.5) * viewport.height;
-      basePosition.current = { x, y, z: 0 };
-    }
-  }, [isDragging, dragPosition, viewport]);
+  
+  // Target look direction based on mouse
+  const targetLookAt = useRef(new THREE.Vector3(0, 0, 5));
+  const currentLookAt = useRef(new THREE.Vector3(0, 0, 5));
 
   useEffect(() => {
-    // Gopher ALWAYS looks at cursor
-    const cursorX = (mousePosition.normalizedX - 0.5) * viewport.width * 2;
-    const cursorY = -(mousePosition.normalizedY - 0.5) * viewport.height * 2;
+    // Calculate where cursor is relative to viewport center
+    const cursorX = (mousePosition.normalizedX - 0.5) * 10;
+    const cursorY = -(mousePosition.normalizedY - 0.5) * 10;
     targetLookAt.current.set(cursorX, cursorY, 8);
-  }, [viewport.width, viewport.height, mousePosition]);
+  }, [mousePosition]);
 
   useFrame((_, delta) => {
     if (!groupRef.current || !isVisible) return;
 
-    // Target position - either dragged or base position
-    let targetX = basePosition.current.x;
-    let targetY = basePosition.current.y;
+    // Gopher stays centered in the small viewport
+    const targetX = 0;
+    const targetY = 0;
 
-    if (isDragging && dragPosition) {
-      targetX = (dragPosition.x / window.innerWidth - 0.5) * viewport.width;
-      targetY = -(dragPosition.y / window.innerHeight - 0.5) * viewport.height;
-    }
-
-    // Position interpolation - faster when dragging
-    const positionLerp = isDragging ? 0.3 : 0.08;
-    
-    currentPosition.current.x += (targetX - currentPosition.current.x) * positionLerp;
-    currentPosition.current.y += (targetY - currentPosition.current.y) * positionLerp;
-
-    // LookAt interpolation - SUPER responsive
+    // LookAt interpolation - responsive gaze tracking
     const lookAtLerp = 0.15;
     currentLookAt.current.x += (targetLookAt.current.x - currentLookAt.current.x) * lookAtLerp;
     currentLookAt.current.y += (targetLookAt.current.y - currentLookAt.current.y) * lookAtLerp;
@@ -90,14 +72,10 @@ function GopherModel({
 
     // Floating animation (subtle when not dragging)
     const time = Date.now() * 0.001;
-    const floatY = isDragging ? 0 : Math.sin(time * 1.8) * 0.06;
-    const floatX = isDragging ? 0 : Math.cos(time * 1.3) * 0.025;
+    const floatY = isDragging ? 0 : Math.sin(time * 1.8) * 0.08;
+    const floatX = isDragging ? 0 : Math.cos(time * 1.3) * 0.04;
     
-    groupRef.current.position.set(
-      currentPosition.current.x + floatX,
-      currentPosition.current.y + floatY,
-      currentPosition.current.z
-    );
+    groupRef.current.position.set(targetX + floatX, targetY + floatY, 0);
 
     // Update hitbox position
     if (hitboxRef.current) {
@@ -105,10 +83,10 @@ function GopherModel({
     }
 
     // Scale with breathing + excitement when hovered/dragged
-    const excitementScale = isHovered || isDragging ? 1.05 : 1;
-    groupRef.current.scale.setScalar(0.35 * breathScale * excitementScale);
+    const excitementScale = isHovered || isDragging ? 1.08 : 1;
+    groupRef.current.scale.setScalar(0.45 * breathScale * excitementScale);
 
-    // Make Gopher look at cursor
+    // Make Gopher look at cursor direction
     const gopherPos = groupRef.current.position.clone();
     
     const targetQuaternion = new THREE.Quaternion();
@@ -121,7 +99,7 @@ function GopherModel({
     const baseRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
     targetQuaternion.multiply(baseRotation);
     
-    // VERY fast slerp for responsive gaze
+    // Fast slerp for responsive gaze
     const slerpSpeed = isDragging ? 0.4 : 0.2;
     groupRef.current.quaternion.slerp(targetQuaternion, slerpSpeed);
     
@@ -135,7 +113,10 @@ function GopherModel({
 
   const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
-    onDragStart();
+    // Calculate offset from center of the viewport to where user clicked
+    const offsetX = e.nativeEvent.clientX - (e.nativeEvent.clientX);
+    const offsetY = e.nativeEvent.clientY - (e.nativeEvent.clientY);
+    onDragStart(offsetX, offsetY);
   }, [onDragStart]);
 
   const handlePointerOver = useCallback(() => {
@@ -145,8 +126,10 @@ function GopherModel({
 
   const handlePointerOut = useCallback(() => {
     setIsHovered(false);
-    document.body.style.cursor = 'auto';
-  }, []);
+    if (!isDragging) {
+      document.body.style.cursor = 'auto';
+    }
+  }, [isDragging]);
 
   if (!isVisible) return null;
 
@@ -160,34 +143,15 @@ function GopherModel({
         onPointerOut={handlePointerOut}
         visible={false}
       >
-        <sphereGeometry args={[0.8, 16, 16]} />
+        <sphereGeometry args={[1, 16, 16]} />
         <meshBasicMaterial transparent opacity={0} />
       </mesh>
       
-      <group ref={groupRef} scale={0.35}>
+      <group ref={groupRef} scale={0.45}>
         <primitive object={clonedScene} />
       </group>
     </>
   );
-}
-
-function CameraController({ mousePosition }: { mousePosition: MousePosition }) {
-  const { camera } = useThree();
-  const targetRotation = useRef({ x: 0, y: 0 });
-
-  useFrame(() => {
-    // Camera subtly follows mouse for parallax effect
-    const mouseInfluenceX = (mousePosition.normalizedX - 0.5) * 2;
-    const mouseInfluenceY = (mousePosition.normalizedY - 0.5) * 2;
-
-    targetRotation.current.x = -mouseInfluenceY * 0.012;
-    targetRotation.current.y = mouseInfluenceX * 0.012;
-
-    camera.rotation.x += (targetRotation.current.x - camera.rotation.x) * 0.025;
-    camera.rotation.y += (targetRotation.current.y - camera.rotation.y) * 0.025;
-  });
-
-  return null;
 }
 
 interface FlyingGopherProps {
@@ -200,27 +164,43 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
   const [mounted, setMounted] = useState(false);
   const [internalMouse, setInternalMouse] = useState({ normalizedX: 0.5, normalizedY: 0.5 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragPosition, setDragPosition] = useState<{ x: number; y: number } | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isMobile, setIsMobile] = useState(false);
-  // Mobile drag handle position (screen coords)
-  const [mobilePosition, setMobilePosition] = useState({ x: 0, y: 0 });
   const [isMinimized, setIsMinimized] = useState(false);
+  
+  // Spring-animated position for smooth following
+  const springConfig = { stiffness: 120, damping: 20, mass: 0.8 };
+  const containerX = useSpring(0, springConfig);
+  const containerY = useSpring(0, springConfig);
+  
+  // Base position (where gopher "lives" when not following cursor)
+  const basePosition = useRef({ x: 0, y: 0 });
+  
+  // Mobile drag handle position
+  const [mobilePosition, setMobilePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     setMounted(true);
-    // Check if mobile
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
     checkMobile();
-    // Set initial mobile position to bottom right
+    
+    // Set initial position to bottom right
+    const initialX = window.innerWidth - VIEWPORT_SIZE - 20;
+    const initialY = window.innerHeight - VIEWPORT_SIZE - 100;
+    basePosition.current = { x: initialX, y: initialY };
+    containerX.set(initialX);
+    containerY.set(initialY);
+    
     setMobilePosition({ 
       x: window.innerWidth - 120, 
       y: window.innerHeight - 180 
     });
+    
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [containerX, containerY]);
 
   // Mouse/touch tracking
   useEffect(() => {
@@ -230,9 +210,13 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
         normalizedY: e.clientY / window.innerHeight,
       });
       
-      // Update drag position if dragging (desktop)
       if (isDragging && !isMobile) {
-        setDragPosition({ x: e.clientX, y: e.clientY });
+        // When dragging, viewport follows cursor directly
+        const newX = e.clientX - VIEWPORT_HALF + dragOffset.x;
+        const newY = e.clientY - VIEWPORT_HALF + dragOffset.y;
+        containerX.set(newX);
+        containerY.set(newY);
+        basePosition.current = { x: newX, y: newY };
       }
     };
 
@@ -243,7 +227,6 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
           x: Math.max(60, Math.min(window.innerWidth - 60, touch.clientX)),
           y: Math.max(60, Math.min(window.innerHeight - 60, touch.clientY)),
         });
-        // Also update internal mouse for gopher to look at
         setInternalMouse({
           normalizedX: touch.clientX / window.innerWidth,
           normalizedY: touch.clientY / window.innerHeight,
@@ -275,10 +258,11 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isDragging, isMobile]);
+  }, [isDragging, isMobile, dragOffset, containerX, containerY]);
 
-  const handleDragStart = useCallback(() => {
+  const handleDragStart = useCallback((offsetX: number, offsetY: number) => {
     setIsDragging(true);
+    setDragOffset({ x: offsetX, y: offsetY });
     if (!isMobile) {
       document.body.style.cursor = 'grabbing';
     }
@@ -339,7 +323,7 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
       <AnimatePresence>
         {isVisible && (
           <motion.div
-            className="fixed z-50"
+            className="fixed z-50 pointer-events-none"
             style={{ 
               left: mobilePosition.x - 60, 
               top: mobilePosition.y - 60,
@@ -354,7 +338,7 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
             {/* Close button */}
             <button
               onClick={handleClose}
-              className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-card border border-border rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform"
+              className="absolute -top-2 -right-2 z-10 w-7 h-7 bg-card border border-border rounded-full flex items-center justify-center shadow-md active:scale-95 transition-transform pointer-events-auto"
               aria-label="Hide Gopher"
             >
               <X className="w-4 h-4 text-muted-foreground" />
@@ -363,15 +347,15 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
             {/* Drag handle */}
             <div
               onTouchStart={handleMobileTouchStart}
-              className={`absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 w-12 h-6 bg-card border border-border rounded-full flex items-center justify-center shadow-md ${
+              className={`absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 w-12 h-6 bg-card border border-border rounded-full flex items-center justify-center shadow-md pointer-events-auto ${
                 isDragging ? 'bg-primary/20 border-primary' : ''
               }`}
             >
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </div>
 
-            {/* Gopher Canvas - transparent, no frame */}
-            <div className="w-full h-full overflow-visible">
+            {/* Gopher Canvas */}
+            <div className="w-full h-full overflow-visible pointer-events-auto">
               <Canvas
                 camera={{ position: [0, 0, 5], fov: 50 }}
                 gl={{ antialias: true, alpha: true }}
@@ -394,54 +378,66 @@ export function FlyingGopher({ isVisible, mousePosition, onClose }: FlyingGopher
     );
   }
 
-  // Desktop version
+  // Desktop version - Small viewport that follows cursor
   return (
     <AnimatePresence>
       {isVisible && (
-        <motion.div
-          className="fixed inset-0 z-40"
-          style={{ pointerEvents: isDragging ? 'auto' : 'none' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          {/* Close button for desktop */}
-          <button
+        <>
+          {/* Close button - positioned independently */}
+          <motion.button
             onClick={handleClose}
             className="fixed bottom-4 right-4 z-50 px-4 py-2 bg-card border border-border rounded-lg flex items-center gap-2 shadow-md hover:bg-muted transition-colors"
-            style={{ pointerEvents: 'auto' }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
             aria-label="Hide Gopher"
           >
             <X className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Скрыть Gopher</span>
-          </button>
+          </motion.button>
 
-          <Canvas
-            camera={{ position: [0, 0, 8], fov: 45 }}
-            gl={{ antialias: true, alpha: true }}
-            style={{ background: "transparent", pointerEvents: 'auto' }}
+          {/* Floating viewport container - only covers a small area */}
+          <motion.div
+            className="fixed z-40 pointer-events-none"
+            style={{ 
+              x: containerX,
+              y: containerY,
+              width: VIEWPORT_SIZE,
+              height: VIEWPORT_SIZE,
+            }}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ duration: 0.5 }}
           >
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[10, 10, 5]} intensity={1.2} />
-            <directionalLight position={[-5, 5, -5]} intensity={0.4} color="#C9673A" />
-            <pointLight position={[0, 5, 0]} intensity={0.5} color="#00D4AA" />
-            
-            <CameraController mousePosition={effectiveMouse} />
+            <Canvas
+              camera={{ position: [0, 0, 5], fov: 45 }}
+              gl={{ antialias: true, alpha: true }}
+              style={{ 
+                background: "transparent", 
+                pointerEvents: 'auto',
+                borderRadius: '50%',
+              }}
+            >
+              <ambientLight intensity={0.6} />
+              <directionalLight position={[10, 10, 5]} intensity={1.2} />
+              <directionalLight position={[-5, 5, -5]} intensity={0.4} color="#C9673A" />
+              <pointLight position={[0, 5, 0]} intensity={0.5} color="#00D4AA" />
 
-            <Suspense fallback={null}>
-              <GopherModel 
-                isVisible={isVisible}
-                mousePosition={effectiveMouse}
-                isDragging={isDragging}
-                dragPosition={dragPosition}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-              />
-              <Environment preset="city" />
-            </Suspense>
-          </Canvas>
-        </motion.div>
+              <Suspense fallback={null}>
+                <GopherModel 
+                  isVisible={isVisible}
+                  mousePosition={effectiveMouse}
+                  isDragging={isDragging}
+                  dragOffset={dragOffset}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                />
+                <Environment preset="city" />
+              </Suspense>
+            </Canvas>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   );
