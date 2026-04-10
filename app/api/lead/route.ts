@@ -80,7 +80,9 @@ export async function POST(request: NextRequest) {
 🌐 *Источник:* Landing Form`;
 
     // Send to Telegram
-    console.log("[v0] API Lead: Sending to Telegram, chatId:", chatId);
+    // Parse chatId as number (required for negative group IDs)
+    const numericChatId = parseInt(chatId, 10);
+    console.log("[v0] API Lead: Sending to Telegram, chatId:", chatId, "numericChatId:", numericChatId);
     
     const telegramResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
@@ -90,7 +92,7 @@ export async function POST(request: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          chat_id: chatId,
+          chat_id: numericChatId,
           text: message,
           parse_mode: "Markdown",
         }),
