@@ -1,6 +1,7 @@
 import { Navigation } from "@/components/landing/Navigation";
 import { Hero } from "@/components/landing/Hero";
 import { ValueProps } from "@/components/landing/ValueProps";
+import { StickyCTA } from "@/components/landing/StickyCTA";
 
 import { Portfolio } from "@/components/landing/Portfolio";
 import { Testimonials } from "@/components/landing/Testimonials";
@@ -18,6 +19,7 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <Navigation />
+      <StickyCTA />
       <Hero />
       <ValueProps />
       <Portfolio />

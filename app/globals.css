@@ -39,6 +39,15 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
+  
+  /* Dark Surface System - for dark sections */
+  --surface-dark: oklch(0.15 0.01 240); /* #18181B */
+  --surface-dark-elevated: oklch(0.18 0.01 240); /* #222222 */
+  --surface-dark-border: oklch(0.25 0.01 240); /* #333333 */
+  --surface-dark-border-hover: oklch(0.35 0.08 35); /* Primary tinted border */
+  --text-dark-primary: oklch(0.96 0.01 80); /* #F5F2ED */
+  --text-dark-secondary: oklch(0.55 0.01 0); /* #888888 */
+  --text-dark-muted: oklch(0.42 0.01 0); /* #666666 */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -116,6 +125,14 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* Dark Surface Colors */
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-dark-elevated: var(--surface-dark-elevated);
+  --color-surface-dark-border: var(--surface-dark-border);
+  --color-surface-dark-border-hover: var(--surface-dark-border-hover);
+  --color-text-dark-primary: var(--text-dark-primary);
+  --color-text-dark-secondary: var(--text-dark-secondary);
+  --color-text-dark-muted: var(--text-dark-muted);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -140,6 +157,26 @@
   ::selection {
     @apply bg-primary/20 text-foreground;
   }
+  /* Accessibility: Consistent focus-visible states */
+  [tabindex]:focus-visible,
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 
@@ -151,6 +188,38 @@
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark section with depth and glow */
+.dark-section {
+  position: relative;
+  background: linear-gradient(180deg, 
+    var(--surface-dark) 0%,
+    var(--surface-dark-elevated) 100%
+  );
+}
+
+.dark-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    oklch(0.58 0.14 35 / 0.08) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+/* Dark section grain overlay */
+.dark-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.02;
   pointer-events: none;
   z-index: 1;
 }

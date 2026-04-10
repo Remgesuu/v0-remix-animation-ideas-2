@@ -37,7 +37,7 @@ export function Hero() {
       {/* Flying Gopher - fixed position, follows scroll + mouse */}
       <FlyingGopher isVisible={gopherVisible} mousePosition={mousePosition} onClose={handleGopherClose} />
       
-      <section className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden bg-background">
+      <section className="relative min-h-screen flex items-center justify-center pt-16 pb-8 lg:pb-0 overflow-hidden bg-background">
         {/* Subtle background texture */}
         <div className="absolute inset-0 grain opacity-30" />
         
@@ -79,14 +79,19 @@ export function Hero() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left side - Content */}
             <div className="text-center lg:text-left">
-              {/* Eyebrow */}
+              {/* Eyebrow with social proof */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
+                className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-6"
               >
-                <span className="inline-block px-4 py-1.5 mb-6 text-xs font-medium tracking-widest uppercase text-primary bg-primary/10 rounded-full border border-primary/20">
+                <span className="inline-block px-4 py-1.5 text-xs font-medium tracking-widest uppercase text-primary bg-primary/10 rounded-full border border-primary/20">
                   Индивидуальное менторство
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground bg-muted rounded-full">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  50+ выпускников трудоустроены
                 </span>
               </motion.div>
 
@@ -115,7 +120,7 @@ export function Hero() {
 
               {/* CTA Group */}
               <motion.div
-                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
+                className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-3 sm:gap-4 w-full sm:w-auto"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
@@ -123,7 +128,7 @@ export function Hero() {
                 <MagneticButton
                   as="a"
                   href="#lead-form"
-                  className="group flex items-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+                  className="group flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
                   strength={0.35}
                 >
                   Оставить заявку
@@ -132,7 +137,7 @@ export function Hero() {
                 <MagneticButton
                   as="a"
                   href="#curriculum"
-                  className="px-8 py-4 text-foreground border border-border rounded-lg font-medium hover:bg-card hover:border-primary/30 transition-all"
+                  className="px-8 py-4 text-foreground border border-border rounded-lg font-medium hover:bg-card hover:border-primary/30 transition-all text-center"
                   strength={0.2}
                 >
                   Смотреть программу
@@ -175,7 +180,7 @@ export function Hero() {
 
               {/* Floating badges */}
               <motion.div
-                className="absolute -top-4 -right-4 bg-[#252525] border border-[#333] rounded-lg px-3 py-2 text-xs text-[#888] shadow-lg hidden lg:block"
+                className="absolute -top-4 -right-4 bg-surface-dark-elevated border border-surface-dark-border rounded-lg px-3 py-2 text-xs text-text-dark-secondary shadow-lg hidden lg:block"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1.5 }}
@@ -184,7 +189,7 @@ export function Hero() {
               </motion.div>
 
               <motion.div
-                className="absolute -bottom-4 -left-4 bg-primary text-white rounded-lg px-3 py-2 text-xs font-medium shadow-lg hidden lg:block"
+                className="absolute -bottom-4 -left-4 bg-primary text-primary-foreground rounded-lg px-3 py-2 text-xs font-medium shadow-lg hidden lg:block"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 1.8 }}
